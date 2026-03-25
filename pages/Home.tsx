@@ -154,7 +154,14 @@ const Home = () => {
                     <div className="mt-auto flex items-center justify-between">
                       <p className="text-lg font-bold text-slate-900">${product.price.toFixed(2)}</p>
                       <button 
-                          onClick={() => addToCart(product, 1, 'Default')}
+                          onClick={() =>
+                            addToCart(
+                              product,
+                              1,
+                              product.availableColors?.[0]?.name || 'Default',
+                              product.availableSizes?.[0] || 'Standard'
+                            )
+                          }
                           className="rounded-full bg-slate-100 hover:bg-primary hover:text-white text-slate-900 p-2.5 transition-colors"
                       >
                           <ShoppingCart className="size-4" />
@@ -224,8 +231,8 @@ const Home = () => {
             <ul className="space-y-3 text-sm text-slate-600">
               <li><Link to="/" className="hover:text-primary transition-colors">{t('nav.home')}</Link></li>
               <li><Link to="/shop" className="hover:text-primary transition-colors">{t('nav.shop')}</Link></li>
-              <li><Link to="#" className="hover:text-primary transition-colors">{t('nav.about')}</Link></li>
-              <li><Link to="#" className="hover:text-primary transition-colors">{t('nav.contact')}</Link></li>
+              <li><Link to="/news" className="hover:text-primary transition-colors">{t('nav.news')}</Link></li>
+              <li><Link to="/contact" className="hover:text-primary transition-colors">{t('nav.contact')}</Link></li>
             </ul>
           </div>
           <div>

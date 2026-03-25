@@ -12,6 +12,31 @@ const Shop = () => {
   const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('All');
+  const categoryCountMap = products.reduce<Record<string, number>>((acc, product) => {
+      acc[product.category] = (acc[product.category] || 0) + 1;
+      return acc;
+  }, {});
+  const categoryOptions = [
+      { name: 'Electronics', icon: <Headphones className="size-5" /> },
+      { name: 'Fashion', icon: <Shirt className="size-5" /> },
+      { name: 'Home Decor', icon: <Armchair className="size-5" /> },
+      {
+        name: 'Footwear',
+        icon: (
+          <span className="inline-flex items-center justify-center size-6 rounded-full bg-slate-900 text-white text-[10px] font-bold">
+            Shoes
+          </span>
+        )
+      },
+      {
+        name: 'Accessories',
+        icon: (
+          <span className="inline-flex items-center justify-center size-6 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold">
+            +
+          </span>
+        )
+      }
+  ];
 
   const filteredProducts = products.filter(product => {
       const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -45,25 +70,23 @@ const Shop = () => {
           <div className="flex flex-col gap-1">
              <button onClick={() => setFilterCategory('All')} className={`flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${filterCategory === 'All' ? 'bg-primary/10 text-primary font-bold' : 'text-slate-600 hover:bg-slate-100'}`}>
                 <span className="text-sm">All Products</span>
+                <span className="text-xs font-semibold">{products.length}</span>
             </button>
-            <button onClick={() => setFilterCategory('Electronics')} className={`flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${filterCategory === 'Electronics' ? 'bg-primary/10 text-primary font-bold' : 'text-slate-600 hover:bg-slate-100'}`}>
-              <div className="flex items-center gap-3">
-                <Headphones className="size-5" />
-                <span className="text-sm">Electronics</span>
-              </div>
-            </button>
-            <button onClick={() => setFilterCategory('Fashion')} className={`flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${filterCategory === 'Fashion' ? 'bg-primary/10 text-primary font-bold' : 'text-slate-600 hover:bg-slate-100'}`}>
-              <div className="flex items-center gap-3">
-                <Shirt className="size-5" />
-                <span className="text-sm">Fashion</span>
-              </div>
-            </button>
-            <button onClick={() => setFilterCategory('Home Decor')} className={`flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${filterCategory === 'Home Decor' ? 'bg-primary/10 text-primary font-bold' : 'text-slate-600 hover:bg-slate-100'}`}>
-              <div className="flex items-center gap-3">
-                <Armchair className="size-5" />
-                <span className="text-sm">Home Decor</span>
-              </div>
-            </button>
+            {categoryOptions.map(category => (
+              <button
+                key={category.name}
+                onClick={() => setFilterCategory(category.name)}
+                className={`flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${
+                  filterCategory === category.name ? 'bg-primary/10 text-primary font-bold' : 'text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  {category.icon}
+                  <span className="text-sm">{category.name}</span>
+                </div>
+                <span className="text-xs font-semibold">{categoryCountMap[category.name] || 0}</span>
+              </button>
+            ))}
           </div>
         </div>
 
@@ -150,7 +173,14 @@ const Shop = () => {
                         <p className="text-lg font-bold text-primary">${product.price.toFixed(2)}</p>
                     </div>
                     <button 
-                        onClick={() => addToCart(product, 1, 'Default')}
+                        onClick={() =>
+                          addToCart(
+                            product,
+                            1,
+                            product.availableColors?.[0]?.name || 'Default',
+                            product.availableSizes?.[0] || 'Standard'
+                          )
+                        }
                         disabled={product.stockStatus === 'Out of Stock'}
                         className="rounded-lg bg-primary hover:bg-blue-700 text-white p-2 transition-colors disabled:bg-slate-300 disabled:cursor-not-allowed"
                     >

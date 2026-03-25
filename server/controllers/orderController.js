@@ -1,8 +1,16 @@
-import Order from '../models/Order.js';
 import Customer from '../models/Customer.js';
+import Order from '../models/Order.js';
+import { calculateMembershipLevel, calculateRewardPoints } from '../utils/customerMetrics.js';
+
+const buildOrderCustomer = (customerInput, persistedCustomer) => ({
+  name: customerInput?.name || persistedCustomer.name,
+  email: customerInput?.email || persistedCustomer.email,
+  phone: customerInput?.phone || persistedCustomer.phone || '',
+  address: customerInput?.address || persistedCustomer.address || '',
+  note: customerInput?.note || ''
+});
 
 export const orderController = {
-  // Get all orders
   getAllOrders: async (req, res) => {
     try {
       const orders = await Order.getAll();
@@ -12,76 +20,105 @@ export const orderController = {
     }
   },
 
-  // Get orders by customer
   getCustomerOrders: async (req, res) => {
     try {
       const { customerId } = req.params;
       const orders = await Order.getByCustomerId(customerId);
-      
       res.json({ success: true, data: orders });
     } catch (error) {
       res.status(500).json({ success: false, error: error.message });
     }
   },
 
-  // Create order
   createOrder: async (req, res) => {
     try {
-      const { customerId, totalAmount, items, notes } = req.body;
+      const {
+        customerId,
+        customer: customerInput,
+        subtotal = 0,
+        discount = 0,
+        total,
+        totalAmount,
+        paymentMethod = 'COD',
+        items = [],
+        notes = '',
+        status = 'Pending'
+      } = req.body;
 
-      if (!customerId || !totalAmount) {
-        return res.status(400).json({ success: false, error: 'customerId and totalAmount required' });
+      const finalTotal = Number(total ?? totalAmount ?? 0);
+      if (!finalTotal) {
+        return res.status(400).json({ success: false, error: 'total or totalAmount is required' });
       }
 
-      // Check if customer exists
-      const customer = await Customer.getById(customerId);
+      let customer = null;
+
+      if (customerId) {
+        customer = await Customer.getById(customerId);
+      }
+
+      if (!customer && customerInput?.email) {
+        customer = await Customer.getByEmail(customerInput.email);
+      }
+
+      if (!customer && customerInput?.name && customerInput?.email) {
+        customer = await Customer.create(customerInput);
+      }
+
       if (!customer) {
-        return res.status(404).json({ success: false, error: 'Customer not found' });
+        return res.status(400).json({
+          success: false,
+          error: 'Customer information is required to create an order'
+        });
       }
 
-      const order = await Order.create({ customerId, totalAmount, items, notes });
+      const createdOrder = await Order.create({
+        customerId: customer.id,
+        customer: buildOrderCustomer(customerInput, customer),
+        subtotal: Number(subtotal || finalTotal),
+        discount: Number(discount || 0),
+        totalAmount: finalTotal,
+        paymentMethod,
+        status,
+        items,
+        notes: notes || customerInput?.note || '',
+        crmSynced: true
+      });
 
-      // Update customer membership based on total spending
-      const customerOrders = await Order.getByCustomerId(customerId);
-      const totalSpent = customerOrders.reduce((sum, o) => sum + o.totalAmount, 0);
+      const customerOrders = await Order.getByCustomerId(customer.id);
+      const totalSpent = customerOrders
+        .filter(order => order.status !== 'Cancelled')
+        .reduce((sum, order) => sum + Number(order.totalAmount || 0), 0);
 
-      // Calculate membership level
-      let membershipLevel = 'Bronze';
-      if (totalSpent > 20000000) membershipLevel = 'Diamond';
-      else if (totalSpent > 10000000) membershipLevel = 'Gold';
-      else if (totalSpent > 5000000) membershipLevel = 'Silver';
+      await Customer.updateMembership(
+        customer.id,
+        calculateMembershipLevel(totalSpent),
+        totalSpent,
+        calculateRewardPoints(totalSpent)
+      );
 
-      // Calculate points (1 point per 10,000 VND)
-      const points = Math.floor(totalSpent / 10000);
-
-      await Customer.updateMembership(customerId, membershipLevel, totalSpent, points);
-
-      res.status(201).json({ success: true, data: order });
+      const hydratedOrder = await Order.getById(createdOrder.id);
+      res.status(201).json({ success: true, data: hydratedOrder });
     } catch (error) {
       res.status(500).json({ success: false, error: error.message });
     }
   },
 
-  // Update order status
   updateOrderStatus: async (req, res) => {
     try {
       const { id } = req.params;
       const { status } = req.body;
 
-      const updated = await Order.updateStatus(id, status);
-
-      if (!updated) {
+      const order = await Order.updateStatus(id, status);
+      if (!order) {
         return res.status(404).json({ success: false, error: 'Order not found' });
       }
 
-      const order = await Order.getById(id);
       res.json({ success: true, data: order });
     } catch (error) {
       res.status(500).json({ success: false, error: error.message });
     }
   },
 
-  // Get revenue stats
   getRevenueStats: async (req, res) => {
     try {
       const stats = await Order.getRevenueStats();

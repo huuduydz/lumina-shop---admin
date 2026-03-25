@@ -1,67 +1,151 @@
-import pool from '../config/database.js';
+import mongoose from 'mongoose';
+
+const orderSchema = new mongoose.Schema(
+  {
+    customerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Customer', required: true, index: true },
+    customerName: { type: String, required: true, trim: true },
+    customerEmail: { type: String, required: true, trim: true },
+    customerPhone: { type: String, default: '' },
+    customerAddress: { type: String, default: '' },
+    customerNote: { type: String, default: '' },
+    orderNumber: { type: String, required: true, unique: true, index: true },
+    subtotal: { type: Number, default: 0 },
+    discount: { type: Number, default: 0 },
+    totalAmount: { type: Number, required: true },
+    paymentMethod: { type: String, default: 'COD' },
+    status: {
+      type: String,
+      enum: ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'],
+      default: 'Pending'
+    },
+    items: { type: [mongoose.Schema.Types.Mixed], default: [] },
+    notes: { type: String, default: '' },
+    orderDate: { type: Date, default: Date.now, index: true },
+    crmSynced: { type: Boolean, default: true }
+  },
+  {
+    timestamps: true,
+    versionKey: false
+  }
+);
+
+const OrderModel = mongoose.models.Order || mongoose.model('Order', orderSchema);
+
+const serializeOrder = (document) => {
+  if (!document) {
+    return null;
+  }
+
+  const order = typeof document.toObject === 'function' ? document.toObject() : document;
+  return {
+    ...order,
+    id: order._id?.toString() || order.id
+  };
+};
+
+const buildOrderNumber = () =>
+  `ORD-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.random()
+    .toString(36)
+    .slice(2, 7)
+    .toUpperCase()}`;
 
 export const Order = {
-  // Get all orders
   getAll: async () => {
-    const [rows] = await pool.query('SELECT * FROM orders ORDER BY orderDate DESC');
-    return rows;
+    const orders = await OrderModel.find().sort({ orderDate: -1 });
+    return orders.map(serializeOrder);
   },
 
-  // Get order by ID
   getById: async (id) => {
-    const [rows] = await pool.query('SELECT * FROM orders WHERE id = ?', [id]);
-    return rows[0];
+    const searchFilter =
+      mongoose.Types.ObjectId.isValid(id) ? { _id: id } : { orderNumber: id };
+    const order = await OrderModel.findOne(searchFilter);
+    return serializeOrder(order);
   },
 
-  // Get orders by customer ID
   getByCustomerId: async (customerId) => {
-    const [rows] = await pool.query(
-      'SELECT * FROM orders WHERE customerId = ? ORDER BY orderDate DESC',
-      [customerId]
-    );
-    return rows;
+    if (!mongoose.Types.ObjectId.isValid(customerId)) {
+      return [];
+    }
+
+    const orders = await OrderModel.find({ customerId }).sort({ orderDate: -1 });
+    return orders.map(serializeOrder);
   },
 
-  // Create order
   create: async (data) => {
-    const orderNumber = `ORD-${Date.now()}`;
-    const [result] = await pool.query(
-      'INSERT INTO orders (customerId, orderNumber, totalAmount, status, items, notes) VALUES (?, ?, ?, ?, ?, ?)',
-      [data.customerId, orderNumber, data.totalAmount, 'Pending', JSON.stringify(data.items), data.notes]
-    );
-    return { id: result.insertId, orderNumber, ...data };
+    const order = await OrderModel.create({
+      customerId: data.customerId,
+      customerName: data.customer.name,
+      customerEmail: data.customer.email,
+      customerPhone: data.customer.phone || '',
+      customerAddress: data.customer.address || '',
+      customerNote: data.customer.note || '',
+      orderNumber: buildOrderNumber(),
+      subtotal: data.subtotal || data.totalAmount,
+      discount: data.discount || 0,
+      totalAmount: data.totalAmount,
+      paymentMethod: data.paymentMethod || 'COD',
+      status: data.status || 'Pending',
+      items: data.items || [],
+      notes: data.notes || '',
+      orderDate: data.orderDate || new Date(),
+      crmSynced: data.crmSynced ?? true
+    });
+
+    return serializeOrder(order);
   },
 
-  // Update order status
   updateStatus: async (id, status) => {
-    const [result] = await pool.query(
-      'UPDATE orders SET status = ? WHERE id = ?',
-      [status, id]
-    );
-    return result.affectedRows > 0;
+    const searchFilter =
+      mongoose.Types.ObjectId.isValid(id) ? { _id: id } : { orderNumber: id };
+    const updated = await OrderModel.findOneAndUpdate(searchFilter, { status }, { new: true });
+    return serializeOrder(updated);
   },
 
-  // Get revenue by period
   getRevenueStats: async () => {
-    const [rows] = await pool.query(`
-      SELECT 
-        DATE_FORMAT(orderDate, '%Y-%m') as month,
-        COUNT(*) as orderCount,
-        SUM(totalAmount) as revenue
-      FROM orders
-      WHERE status != 'Cancelled'
-      GROUP BY DATE_FORMAT(orderDate, '%Y-%m')
-      ORDER BY month DESC
-    `);
-    return rows;
+    const stats = await OrderModel.aggregate([
+      {
+        $match: {
+          status: { $ne: 'Cancelled' }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: {
+              format: '%Y-%m',
+              date: '$orderDate'
+            }
+          },
+          orderCount: { $sum: 1 },
+          revenue: { $sum: '$totalAmount' }
+        }
+      },
+      { $sort: { _id: -1 } }
+    ]);
+
+    return stats.map(stat => ({
+      month: stat._id,
+      orderCount: stat.orderCount,
+      revenue: stat.revenue
+    }));
   },
 
-  // Get total revenue
   getTotalRevenue: async () => {
-    const [rows] = await pool.query(
-      'SELECT SUM(totalAmount) as total FROM orders WHERE status != "Cancelled"'
-    );
-    return rows[0]?.total || 0;
+    const [result] = await OrderModel.aggregate([
+      {
+        $match: {
+          status: { $ne: 'Cancelled' }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: '$totalAmount' }
+        }
+      }
+    ]);
+
+    return result?.total || 0;
   }
 };
 

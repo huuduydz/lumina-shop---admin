@@ -1,263 +1,436 @@
+import {
+  Coupon,
+  Product,
+  ProductColorOption,
+  ProductReview,
+  ProductSpecification,
+  SecurityLog,
+  User
+} from './types';
 
-import { Product, User, Coupon, SecurityLog } from './types';
+type CategoryKey = 'Electronics' | 'Fashion' | 'Home Decor' | 'Footwear' | 'Accessories';
 
-export const PRODUCTS: Product[] = [
+interface CategorySeed {
+  category: CategoryKey;
+  prefix: string;
+  basePrice: number;
+  priceStep: number;
+  names: string[];
+  images: string[];
+  colors: ProductColorOption[];
+  sizes: string[];
+}
+
+const CATEGORY_COLORS: Record<CategoryKey, ProductColorOption[]> = {
+  Electronics: [
+    { name: 'Midnight Black', hex: '#0f172a' },
+    { name: 'Silver', hex: '#cbd5e1' },
+    { name: 'Navy Blue', hex: '#1d4ed8' }
+  ],
+  Fashion: [
+    { name: 'Ivory', hex: '#f8fafc' },
+    { name: 'Camel', hex: '#b45309' },
+    { name: 'Forest', hex: '#166534' }
+  ],
+  'Home Decor': [
+    { name: 'Clay', hex: '#b45309' },
+    { name: 'Stone', hex: '#64748b' },
+    { name: 'Olive', hex: '#4d7c0f' }
+  ],
+  Footwear: [
+    { name: 'Jet Black', hex: '#111827' },
+    { name: 'Cloud White', hex: '#f8fafc' },
+    { name: 'Race Red', hex: '#dc2626' }
+  ],
+  Accessories: [
+    { name: 'Classic Black', hex: '#0f172a' },
+    { name: 'Gold Accent', hex: '#ca8a04' },
+    { name: 'Mocha', hex: '#92400e' }
+  ]
+};
+
+const CATEGORY_SIZES: Record<CategoryKey, string[]> = {
+  Electronics: ['Standard', 'Plus', 'Pro'],
+  Fashion: ['S', 'M', 'L', 'XL'],
+  'Home Decor': ['Small', 'Medium', 'Large'],
+  Footwear: ['39', '40', '41', '42'],
+  Accessories: ['Compact', 'Standard', 'Premium']
+};
+
+const CATEGORY_IMAGES: Record<CategoryKey, string[]> = {
+  Electronics: [
+    'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=1200&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1546868871-7041f2a55e12?q=80&w=1200&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?q=80&w=1200&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?q=80&w=1200&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1583394838336-acd977736f90?q=80&w=1200&auto=format&fit=crop'
+  ],
+  Fashion: [
+    'https://images.unsplash.com/photo-1576871337622-98d48d1cf531?q=80&w=1200&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?q=80&w=1200&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?q=80&w=1200&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=1200&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=1200&auto=format&fit=crop'
+  ],
+  'Home Decor': [
+    'https://images.unsplash.com/photo-1581783342308-f792dbdd27c5?q=80&w=1200&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?q=80&w=1200&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1485955900006-10f4d324d411?q=80&w=1200&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1532372320572-cda25653a26d?q=80&w=1200&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?q=80&w=1200&auto=format&fit=crop'
+  ],
+  Footwear: [
+    'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=1200&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1614252369475-531eba835eb1?q=80&w=1200&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1528701800489-20be3c30c1d5?q=80&w=1200&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1543508282-6319a3e2621f?q=80&w=1200&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1514989940723-e8e51635b782?q=80&w=1200&auto=format&fit=crop'
+  ],
+  Accessories: [
+    'https://images.unsplash.com/photo-1572635196237-14b3f281503f?q=80&w=1200&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?q=80&w=1200&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1511499767150-a48a237f0083?q=80&w=1200&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=1200&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1617038220319-276d3cfab638?q=80&w=1200&auto=format&fit=crop'
+  ]
+};
+
+const CATEGORY_SEEDS: CategorySeed[] = [
   {
-    id: '1',
-    name: 'Wireless Noise-Cancelling Headphones Pro',
     category: 'Electronics',
-    price: 299.00,
-    rating: 4.8,
-    reviews: 128,
-    image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=1000&auto=format&fit=crop',
-    thumbnails: ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=200', 'https://images.unsplash.com/photo-1583394838336-acd977736f90?q=80&w=200'],
-    stockStatus: 'In Stock',
-    stockQuantity: 45,
-    minStock: 10,
-    sku: 'AUDIO-001',
-    description: 'Experience sound like never before with our latest driver technology. Immerse yourself in pure audio bliss with active noise cancellation and a comfortable, ergonomic fit designed for all-day wear.'
+    prefix: 'TECH',
+    basePrice: 149,
+    priceStep: 28,
+    names: [
+      'Wireless Noise-Cancelling Headphones Pro',
+      'Series 7 Smart Watch',
+      'Instant Film Camera',
+      'Ultra-Slim 14" Laptop',
+      '4K Ultra HD Monitor',
+      'Smart Home Speaker',
+      'Retro Mechanical Keyboard',
+      'Wireless Gaming Mouse',
+      'Portable Bluetooth Speaker',
+      'USB-C Fast Charging Hub',
+      'Smart Air Purifier Mini',
+      'Action Camera 5K',
+      'True Wireless Earbuds Max',
+      'Mechanical Number Pad',
+      'Gaming Headset Elite',
+      'Mini Projector Beam',
+      'Magnetic Wireless Charger',
+      'Tablet Stand Dock',
+      'Creator Streaming Mic',
+      'Home Security Camera Kit'
+    ],
+    images: CATEGORY_IMAGES.Electronics,
+    colors: CATEGORY_COLORS.Electronics,
+    sizes: CATEGORY_SIZES.Electronics
   },
   {
-    id: '2',
-    name: 'Classic Vintage Denim Jacket',
     category: 'Fashion',
-    price: 89.50,
-    rating: 4.5,
-    reviews: 45,
-    image: 'https://images.unsplash.com/photo-1576871337622-98d48d1cf531?q=80&w=1000&auto=format&fit=crop',
-    stockStatus: 'In Stock',
-    stockQuantity: 20,
-    minStock: 5,
-    sku: 'FASH-002',
-    description: 'A timeless classic. This vintage denim jacket features a relaxed fit, durable cotton denim, and signature metal buttons. Perfect for layering in any season.'
+    prefix: 'FASH',
+    basePrice: 49,
+    priceStep: 11,
+    names: [
+      'Classic Vintage Denim Jacket',
+      'Summer Floral Maxi Dress',
+      'Leather Crossbody Bag',
+      'Oversized Cotton Blazer',
+      'Relaxed Linen Shirt',
+      'City Commuter Trench Coat',
+      'Pleated Midi Skirt',
+      'Silk Blend Office Blouse',
+      'Everyday Straight Jeans',
+      'Premium Knit Cardigan',
+      'Minimal Tailored Trousers',
+      'Weekend Ribbed Tee',
+      'Structured Work Tote',
+      'Lightweight Bomber Jacket',
+      'Soft Cashmere Scarf',
+      'Layered Travel Hoodie',
+      'Classic Polo Dress',
+      'Studio Wide-Leg Pants',
+      'Modern Utility Vest',
+      'Signature Leather Belt'
+    ],
+    images: CATEGORY_IMAGES.Fashion,
+    colors: CATEGORY_COLORS.Fashion,
+    sizes: CATEGORY_SIZES.Fashion
   },
   {
-    id: '3',
-    name: 'Minimalist Ceramic Vase',
     category: 'Home Decor',
-    price: 45.00,
-    rating: 5.0,
-    reviews: 210,
-    image: 'https://images.unsplash.com/photo-1581783342308-f792dbdd27c5?q=80&w=1000&auto=format&fit=crop',
-    stockStatus: 'In Stock',
-    stockQuantity: 100,
-    minStock: 15,
-    sku: 'HOME-003',
-    description: 'Elevate your living space with this handcrafted ceramic vase. Its minimalist design and smooth matte finish make it a perfect centerpiece for any modern home.'
+    prefix: 'HOME',
+    basePrice: 35,
+    priceStep: 19,
+    names: [
+      'Minimalist Ceramic Vase',
+      'Scandinavian Grey Sofa',
+      'Modern Bamboo Plant Stand',
+      'Abstract Geometric Rug',
+      'Marble Coffee Table',
+      'Nordic Table Lamp',
+      'Oak Floating Shelf',
+      'Handwoven Throw Blanket',
+      'Stoneware Dinner Set',
+      'Arch Floor Mirror',
+      'Organic Cotton Cushion Cover',
+      'Wooden Storage Bench',
+      'Framed Botanical Art Set',
+      'Pebble Bathroom Organizer',
+      'Woven Seagrass Basket',
+      'Textured Wall Clock',
+      'Matte Black Candle Holder',
+      'Linen Dining Runner',
+      'Accent Reading Chair',
+      'Terracotta Planter Duo'
+    ],
+    images: CATEGORY_IMAGES['Home Decor'],
+    colors: CATEGORY_COLORS['Home Decor'],
+    sizes: CATEGORY_SIZES['Home Decor']
   },
   {
-    id: '4',
-    name: 'Series 7 Smart Watch',
-    category: 'Electronics',
-    price: 349.00,
-    originalPrice: 399.00,
-    rating: 4.7,
-    reviews: 89,
-    image: 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?q=80&w=1000&auto=format&fit=crop',
-    stockStatus: 'In Stock',
-    stockQuantity: 12,
-    minStock: 10,
-    sku: 'WATCH-X24',
-    description: 'Stay connected and active with the Series 7 Smart Watch. Featuring an always-on retina display, advanced health monitoring, and water resistance up to 50 meters.'
-  },
-  {
-    id: '5',
-    name: 'Air Max Runner Sport',
     category: 'Footwear',
-    price: 120.00,
-    rating: 4.9,
-    reviews: 342,
-    image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=1000&auto=format&fit=crop',
-    stockStatus: 'Out of Stock',
-    stockQuantity: 0,
-    minStock: 8,
-    sku: 'SHOE-R99',
-    description: 'Designed for the dedicated runner. These shoes provide superior cushioning and energy return, helping you run further and faster with less fatigue.'
+    prefix: 'SHOE',
+    basePrice: 65,
+    priceStep: 9,
+    names: [
+      'Air Max Runner Sport',
+      'Leather Oxford Loafers',
+      'Everyday Canvas Sneakers',
+      'Performance Trail Shoes',
+      'Urban Street High Tops',
+      'Classic White Trainers',
+      'Premium Chelsea Boots',
+      'Slip-On Weekend Shoes',
+      'Studio Ballet Flats',
+      'Running Knit Sneakers',
+      'Cushioned Walking Shoes',
+      'Suede Desert Boots',
+      'Mesh Court Trainers',
+      'Minimal Leather Sandals',
+      'Retro Jogger Sneakers',
+      'Comfort Office Loafers',
+      'Waterproof Hiking Boots',
+      'Platform Casual Sneakers',
+      'Lightweight Gym Shoes',
+      'All-Day Commuter Runners'
+    ],
+    images: CATEGORY_IMAGES.Footwear,
+    colors: CATEGORY_COLORS.Footwear,
+    sizes: CATEGORY_SIZES.Footwear
   },
   {
-    id: '6',
-    name: 'Scandanavian Grey Sofa',
-    category: 'Home Decor',
-    price: 899.00,
-    rating: 4.2,
-    reviews: 18,
-    image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?q=80&w=1000&auto=format&fit=crop',
-    stockStatus: 'In Stock',
-    stockQuantity: 5,
-    minStock: 2,
-    sku: 'HOME-SOFA',
-    description: 'Bring comfort and style to your living room with this Scandinavian-inspired sofa. Upholstered in premium grey fabric with solid wood legs.'
-  },
-  {
-    id: '7',
-    name: 'Instant Film Camera',
-    category: 'Electronics',
-    price: 119.00,
-    rating: 4.6,
-    reviews: 56,
-    image: 'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?q=80&w=1000&auto=format&fit=crop',
-    stockStatus: 'Low Stock',
-    stockQuantity: 3,
-    minStock: 5,
-    sku: 'CAM-POL1',
-    description: 'Capture memories instantly with this retro-styled film camera. Features automatic exposure measurement and a built-in selfie lens and mirror.'
-  },
-  {
-    id: '8',
-    name: 'Ultra-Slim 14" Laptop',
-    category: 'Electronics',
-    price: 1299.00,
-    rating: 4.9,
-    reviews: 76,
-    image: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?q=80&w=1000&auto=format&fit=crop',
-    stockStatus: 'In Stock',
-    stockQuantity: 15,
-    minStock: 3,
-    sku: 'TECH-LAP14',
-    description: 'Power meets portability. This ultra-slim laptop features the latest processor, a stunning 4K display, and all-day battery life for professionals on the go.'
-  },
-  {
-    id: '9',
-    name: 'Summer Floral Maxi Dress',
-    category: 'Fashion',
-    price: 59.99,
-    originalPrice: 79.99,
-    rating: 4.4,
-    reviews: 215,
-    image: 'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?q=80&w=1000&auto=format&fit=crop',
-    stockStatus: 'In Stock',
-    stockQuantity: 60,
-    minStock: 10,
-    sku: 'FASH-DRS1',
-    description: 'Breezy and beautiful. This floral maxi dress is perfect for summer days and beach vacations. Made from breathable linen blend fabric.'
-  },
-  {
-    id: '10',
-    name: 'Modern Bamboo Plant Stand',
-    category: 'Home Decor',
-    price: 34.50,
-    rating: 4.8,
-    reviews: 92,
-    image: 'https://images.unsplash.com/photo-1485955900006-10f4d324d411?q=80&w=1000&auto=format&fit=crop',
-    stockStatus: 'In Stock',
-    stockQuantity: 32,
-    minStock: 5,
-    sku: 'HOME-PLNT',
-    description: 'Display your greenery in style. This mid-century modern inspired plant stand is crafted from sustainable bamboo and fits pots up to 10 inches.'
-  },
-  {
-    id: '11',
-    name: 'Leather Oxford Loafers',
-    category: 'Footwear',
-    price: 145.00,
-    rating: 4.7,
-    reviews: 34,
-    image: 'https://images.unsplash.com/photo-1614252369475-531eba835eb1?q=80&w=1000&auto=format&fit=crop',
-    stockStatus: 'Low Stock',
-    stockQuantity: 4,
-    minStock: 8,
-    sku: 'SHOE-OXF',
-    description: 'Handcrafted genuine leather loafers. These shoes offer sophisticated style and superior comfort with a cushioned insole and durable rubber outsole.'
-  },
-  {
-    id: '12',
-    name: '4K Ultra HD Monitor',
-    category: 'Electronics',
-    price: 499.00,
-    rating: 4.6,
-    reviews: 156,
-    image: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?q=80&w=1000&auto=format&fit=crop',
-    stockStatus: 'In Stock',
-    stockQuantity: 22,
-    minStock: 5,
-    sku: 'TECH-MON4K',
-    description: 'See every detail with our 27-inch 4K monitor. Perfect for designers and gamers alike, offering 99% sRGB color accuracy and 144Hz refresh rate.'
-  },
-  {
-    id: '13',
-    name: 'Aviator Sunglasses',
     category: 'Accessories',
-    price: 150.00,
-    rating: 4.8,
-    reviews: 440,
-    image: 'https://images.unsplash.com/photo-1572635196237-14b3f281503f?q=80&w=1000&auto=format&fit=crop',
-    stockStatus: 'In Stock',
-    stockQuantity: 80,
-    minStock: 15,
-    sku: 'ACC-SUN1',
-    description: 'Classic style that never fades. These aviator sunglasses feature polarized lenses and a lightweight metal frame for maximum comfort and UV protection.'
-  },
-  {
-    id: '14',
-    name: 'Abstract Geometric Rug',
-    category: 'Home Decor',
-    price: 199.00,
-    rating: 4.3,
-    reviews: 28,
-    image: 'https://images.unsplash.com/photo-1575414003591-ece8d0416c7a?q=80&w=1000&auto=format&fit=crop',
-    stockStatus: 'In Stock',
-    stockQuantity: 14,
-    minStock: 3,
-    sku: 'HOME-RUG',
-    description: 'Add a pop of color and texture to your floor. This soft, durable rug features a bold geometric pattern that complements modern interiors.'
-  },
-  {
-    id: '15',
-    name: 'Smart Home Speaker',
-    category: 'Electronics',
-    price: 99.00,
-    rating: 4.5,
-    reviews: 882,
-    image: 'https://images.unsplash.com/photo-1589492477829-5e65395b66cc?q=80&w=1000&auto=format&fit=crop',
-    stockStatus: 'In Stock',
-    stockQuantity: 150,
-    minStock: 20,
-    sku: 'TECH-SPK',
-    description: 'Your personal assistant and music hub in one. Control your smart home devices, play music, and get answers with just your voice.'
-  },
-  {
-    id: '16',
-    name: 'Retro Mechanical Keyboard',
-    category: 'Electronics',
-    price: 165.00,
-    rating: 4.7,
-    reviews: 89,
-    image: 'https://images.unsplash.com/photo-1587829741301-dc798b91add1?q=80&w=1000&auto=format&fit=crop',
-    stockStatus: 'In Stock',
-    stockQuantity: 25,
-    minStock: 5,
-    sku: 'TECH-KB01',
-    description: 'Clicky, tactile, and stylish. This retro-inspired mechanical keyboard features typewriter-style keycaps and RGB backlighting.'
-  },
-  {
-    id: '17',
-    name: 'Leather Crossbody Bag',
-    category: 'Fashion',
-    price: 110.00,
-    rating: 4.6,
-    reviews: 120,
-    image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?q=80&w=1000&auto=format&fit=crop',
-    stockStatus: 'In Stock',
-    stockQuantity: 40,
-    minStock: 8,
-    sku: 'FASH-BAG2',
-    description: 'The perfect daily companion. Made from premium vegetable-tanned leather that ages beautifully over time.'
-  },
-  {
-    id: '18',
-    name: 'Marble Coffee Table',
-    category: 'Home Decor',
-    price: 450.00,
-    rating: 4.8,
-    reviews: 32,
-    image: 'https://images.unsplash.com/photo-1532372320572-cda25653a26d?q=80&w=1000&auto=format&fit=crop',
-    stockStatus: 'Low Stock',
-    stockQuantity: 3,
-    minStock: 3,
-    sku: 'HOME-TBL',
-    description: 'Luxury for your living room. This solid marble coffee table features a sleek metal base and a polished white marble top.'
+    prefix: 'ACC',
+    basePrice: 25,
+    priceStep: 8,
+    names: [
+      'Aviator Sunglasses',
+      'Minimal Leather Wallet',
+      'Travel Passport Holder',
+      'Smart RFID Card Case',
+      'Stainless Steel Watch Strap',
+      'Canvas Weekend Cap',
+      'Premium Laptop Sleeve',
+      'Convertible Phone Lanyard',
+      'Classic Link Bracelet',
+      'Compact Makeup Organizer',
+      'Travel Cable Pouch',
+      'Foldable Tote Bag',
+      'Pearl Accent Hair Clip Set',
+      'Slim Key Holder',
+      'Sport Water Bottle Sleeve',
+      'Camera Crossbody Strap',
+      'Signature Silk Tie',
+      'Protective Eyewear Case',
+      'Metal Bookmark Set',
+      'Desk Essentials Organizer'
+    ],
+    images: CATEGORY_IMAGES.Accessories,
+    colors: CATEGORY_COLORS.Accessories,
+    sizes: CATEGORY_SIZES.Accessories
   }
 ];
+
+const buildDescription = (category: CategoryKey, name: string): string => {
+  const copy: Record<CategoryKey, string> = {
+    Electronics:
+      'Built for modern shoppers who want performance, clean design and reliable everyday use.',
+    Fashion:
+      'Designed to elevate everyday styling with premium materials, comfortable fits and versatile details.',
+    'Home Decor':
+      'A refined interior piece that brings warmth, texture and a polished modern look to any space.',
+    Footwear:
+      'Engineered for comfort, grip and confident movement from daily commutes to weekend plans.',
+    Accessories:
+      'A practical finishing piece that adds function, style and a more complete lifestyle experience.'
+  };
+
+  return `${name} is part of the Lumina ${category} collection. ${copy[category]}`;
+};
+
+const buildSpecifications = (
+  category: CategoryKey,
+  name: string,
+  index: number
+): ProductSpecification[] => {
+  switch (category) {
+    case 'Electronics':
+      return [
+        { label: 'Connectivity', value: index % 2 === 0 ? 'Bluetooth 5.3 / USB-C' : 'Wi-Fi 6 / USB-C' },
+        { label: 'Battery', value: `${24 + index * 2} hours` },
+        { label: 'Warranty', value: '24 months official warranty' }
+      ];
+    case 'Fashion':
+      return [
+        { label: 'Material', value: index % 2 === 0 ? 'Premium cotton blend' : 'Linen blend fabric' },
+        { label: 'Fit', value: index % 3 === 0 ? 'Relaxed fit' : 'Tailored fit' },
+        { label: 'Care', value: 'Machine wash cold' }
+      ];
+    case 'Home Decor':
+      return [
+        { label: 'Material', value: index % 2 === 0 ? 'Ceramic / engineered wood' : 'Natural wood / cotton mix' },
+        { label: 'Style', value: 'Modern minimalist' },
+        { label: 'Best Use', value: `Ideal for ${name.toLowerCase()}` }
+      ];
+    case 'Footwear':
+      return [
+        { label: 'Upper', value: index % 2 === 0 ? 'Breathable mesh upper' : 'Premium leather upper' },
+        { label: 'Sole', value: 'Lightweight rubber outsole' },
+        { label: 'Comfort', value: 'Cushioned insole with arch support' }
+      ];
+    case 'Accessories':
+      return [
+        { label: 'Material', value: index % 2 === 0 ? 'Vegan leather and metal' : 'Canvas and alloy' },
+        { label: 'Function', value: 'Portable, everyday essential' },
+        { label: 'Packaging', value: 'Gift-ready premium box' }
+      ];
+    default:
+      return [];
+  }
+};
+
+const buildDetailSections = (
+  category: CategoryKey,
+  name: string,
+  index: number
+): string[] => {
+  const intro: Record<CategoryKey, string> = {
+    Electronics:
+      'This model is tuned for shoppers who want clean performance, stable connectivity and a premium day-to-day experience.',
+    Fashion:
+      'The silhouette is designed to be easy to style for both work and weekend looks while still feeling comfortable throughout the day.',
+    'Home Decor':
+      'This piece adds warmth and texture to interiors without overwhelming the room, making it easy to mix with modern or neutral palettes.',
+    Footwear:
+      'The structure focuses on comfort, grip and long-wear support, so it works for both daily use and more active routines.',
+    Accessories:
+      'This accessory balances practicality and style, helping complete an outfit or workspace with a polished finishing touch.'
+  };
+
+  return [
+    `${name} is one of Lumina's standout ${category.toLowerCase()} picks for this season.`,
+    intro[category],
+    `Version ${index + 1} in this line keeps the same design language while adding refined finishing details for better usability.`
+  ];
+};
+
+const buildCustomerReviews = (
+  category: CategoryKey,
+  name: string,
+  rating: number,
+  index: number
+): ProductReview[] => {
+  const authors = ['Minh Anh', 'Bao Tran', 'Linh Pham'];
+  const titles = ['Worth the money', 'Looks even better in person', 'Will buy again'];
+  const comments: Record<CategoryKey, string[]> = {
+    Electronics: [
+      `${name} feels premium and the overall performance is very stable in daily use.`,
+      'Setup was quick and the finish looks clean on my desk.',
+      'Battery, sound and comfort are all balanced really well for the price.'
+    ],
+    Fashion: [
+      `${name} has a flattering fit and the fabric feels better than expected.`,
+      'Easy to mix with basic outfits and still looks polished.',
+      'The stitching and finishing details make it feel more premium than many similar items.'
+    ],
+    'Home Decor': [
+      `${name} fits perfectly into a modern apartment and instantly upgrades the space.`,
+      'The color and texture match the product photos very closely.',
+      'It is decorative, practical and easy to place in different rooms.'
+    ],
+    Footwear: [
+      `${name} is comfortable from the first wear and feels supportive when walking a lot.`,
+      'The outsole grip is reliable and the shape looks modern.',
+      'I like that it balances comfort with a clean everyday design.'
+    ],
+    Accessories: [
+      `${name} is compact, useful and adds a nice premium touch to daily carry.`,
+      'Material quality is solid and the details are well finished.',
+      'A practical item that also works well as a gift.'
+    ]
+  };
+
+  return authors.map((author, reviewIndex) => ({
+    id: `${category}-${index + 1}-review-${reviewIndex + 1}`,
+    author,
+    title: titles[reviewIndex],
+    rating: Math.max(4, Math.min(5, Math.round(rating))),
+    date: `2026-0${reviewIndex + 4}-1${(index % 8) + 1}`,
+    comment: comments[category][reviewIndex]
+  }));
+};
+
+const resolveStockStatus = (stockQuantity: number, minStock: number): Product['stockStatus'] => {
+  if (stockQuantity === 0) {
+    return 'Out of Stock';
+  }
+
+  if (stockQuantity <= minStock) {
+    return 'Low Stock';
+  }
+
+  return 'In Stock';
+};
+
+const buildCategoryProducts = (seed: CategorySeed, categoryIndex: number): Product[] =>
+  seed.names.map((name, index) => {
+    const numericId = categoryIndex * 20 + index + 1;
+    const image = seed.images[index % seed.images.length];
+    const altImageOne = seed.images[(index + 1) % seed.images.length];
+    const altImageTwo = seed.images[(index + 2) % seed.images.length];
+    const minStock = 4 + (index % 4);
+    const stockQuantity =
+      index % 11 === 0 ? 0 : index % 6 === 0 ? Math.max(1, minStock - 1) : minStock + 14 + ((index * 3) % 18);
+    const price = Number((seed.basePrice + seed.priceStep * index).toFixed(2));
+    const rating = Number((4.2 + ((index + categoryIndex) % 6) * 0.1).toFixed(1));
+    const reviews = 48 + index * 17 + categoryIndex * 23;
+
+    return {
+      id: String(numericId),
+      name,
+      category: seed.category,
+      price,
+      originalPrice: index % 4 === 0 ? Number((price * 1.18).toFixed(2)) : undefined,
+      rating,
+      reviews,
+      image,
+      thumbnails: [image, altImageOne, altImageTwo],
+      stockStatus: resolveStockStatus(stockQuantity, minStock),
+      stockQuantity,
+      minStock,
+      sku: `${seed.prefix}-${String(index + 1).padStart(3, '0')}`,
+      description: buildDescription(seed.category, name),
+      availableColors: seed.colors,
+      availableSizes: seed.sizes,
+      specifications: buildSpecifications(seed.category, name, index),
+      detailSections: buildDetailSections(seed.category, name, index),
+      customerReviews: buildCustomerReviews(seed.category, name, rating, index)
+    };
+  });
+
+export const PRODUCTS: Product[] = CATEGORY_SEEDS.flatMap(buildCategoryProducts);
 
 export const USERS: User[] = [
   { id: '1', name: 'Duy admin', email: 'duyadmin@gmail.com', role: 'Admin', status: 'Active', lastLogin: '2 mins ago', avatar: 'https://picsum.photos/id/64/100/100' },
@@ -265,7 +438,7 @@ export const USERS: User[] = [
   { id: '3', name: 'Duy Khach Hang', email: 'duykhachhang@gmail.com', role: 'Customer', status: 'Inactive', lastLogin: '1 day ago', avatar: 'https://picsum.photos/id/66/100/100' },
   { id: '4', name: 'Cameron Williamson', email: 'cameron.w@example.com', role: 'Customer', status: 'Active', lastLogin: '2 days ago', avatar: 'https://picsum.photos/id/67/100/100' },
   { id: '5', name: 'Jane Cooper', email: 'jane.cooper@example.com', role: 'Admin', status: 'Active', lastLogin: '10 mins ago', avatar: 'https://picsum.photos/id/68/100/100' },
-  { id: '6', name: 'Esther Howard', email: 'esther.howard@example.com', role: 'Customer', status: 'Active', lastLogin: '5 hours ago', avatar: 'https://picsum.photos/id/69/100/100' },
+  { id: '6', name: 'Esther Howard', email: 'esther.howard@example.com', role: 'Customer', status: 'Active', lastLogin: '5 hours ago', avatar: 'https://picsum.photos/id/69/100/100' }
 ];
 
 export const COUPONS: Coupon[] = [
@@ -273,11 +446,11 @@ export const COUPONS: Coupon[] = [
   { id: '2', code: 'WELCOME10', description: 'New user bonus', type: 'Fixed Cart', value: 10, usageCount: 0, usageLimit: 0, expiryDate: 'No Expiry', status: 'Active' },
   { id: '3', code: 'FLASH50', description: '24hr Flash Sale', type: 'Percentage', value: 50, usageCount: 50, usageLimit: 50, expiryDate: 'Yesterday', status: 'Expired' },
   { id: '4', code: 'FREESHIP', description: 'Free shipping > $50', type: 'Free Shipping', value: 0, usageCount: 1203, usageLimit: 0, expiryDate: 'Dec 31, 2024', status: 'Active' },
-  { id: '5', code: 'VIP25', description: 'Loyalty Rewards', type: 'Percentage', value: 25, usageCount: 12, usageLimit: 100, expiryDate: 'Oct 15, 2024', status: 'Scheduled' },
+  { id: '5', code: 'VIP25', description: 'Loyalty Rewards', type: 'Percentage', value: 25, usageCount: 12, usageLimit: 100, expiryDate: 'Oct 15, 2024', status: 'Scheduled' }
 ];
 
 export const SECURITY_LOGS: SecurityLog[] = [
-  { id: '1', type: 'Warning', title: 'Failed Login Attempt', detail: 'IP 192.168.1.42 • 10m ago' },
-  { id: '2', type: 'Info', title: 'System Updated', detail: 'Core v2.4.1 • 2h ago' },
-  { id: '3', type: 'Success', title: 'Backup Completed', detail: 'Automated • 5h ago' },
+  { id: '1', type: 'Warning', title: 'Failed Login Attempt', detail: 'IP 192.168.1.42 - 10m ago' },
+  { id: '2', type: 'Info', title: 'System Updated', detail: 'Core v2.4.1 - 2h ago' },
+  { id: '3', type: 'Success', title: 'Backup Completed', detail: 'Automated - 5h ago' }
 ];

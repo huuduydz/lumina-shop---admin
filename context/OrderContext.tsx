@@ -1,10 +1,16 @@
-
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { Order, CustomerInfo, CartItem } from '../types';
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { CartItem, CustomerInfo, Order } from '../types';
 
 interface OrderContextType {
   orders: Order[];
-  createOrder: (customer: CustomerInfo, items: CartItem[], subtotal: number, discount: number, total: number, paymentMethod: string) => Promise<boolean>;
+  createOrder: (
+    customer: CustomerInfo,
+    items: CartItem[],
+    subtotal: number,
+    discount: number,
+    total: number,
+    paymentMethod: string
+  ) => Promise<boolean>;
   updateOrderStatus: (orderId: string, status: Order['status']) => void;
   isLoading: boolean;
 }
@@ -12,9 +18,58 @@ interface OrderContextType {
 const OrderContext = createContext<OrderContextType | undefined>(undefined);
 const API_URL = 'http://localhost:3001/api';
 
-// Simple CRM sync placeholder
-const syncToCRM = async (order: Order) => {
-  await new Promise((r) => setTimeout(r, 500));
+const readOrdersFromStorage = (): Order[] => {
+  try {
+    const savedOrders = localStorage.getItem('lumina_orders');
+    return savedOrders ? JSON.parse(savedOrders) : [];
+  } catch (error) {
+    return [];
+  }
+};
+
+const parseOrderItems = (items: unknown) => {
+  if (Array.isArray(items)) {
+    return items;
+  }
+
+  if (typeof items !== 'string') {
+    return [];
+  }
+
+  try {
+    return JSON.parse(items);
+  } catch (error) {
+    return [];
+  }
+};
+
+const mapApiOrder = (order: any): Order => {
+  const customer = order.customer || {
+    name: order.customerName || order.customerSnapshot?.name || 'Unknown',
+    email: order.customerEmail || order.customerSnapshot?.email || '',
+    phone: order.customerPhone || order.customerSnapshot?.phone || '',
+    address: order.customerAddress || order.customerSnapshot?.address || '',
+    note: order.customerNote || order.customerSnapshot?.note || order.notes || ''
+  };
+
+  const items = parseOrderItems(order.items);
+
+  return {
+    id: order.orderNumber || order.id || order._id || `ORD-${Date.now()}`,
+    customer,
+    items,
+    subtotal: Number(order.subtotal ?? order.totalAmount ?? order.total ?? 0),
+    discount: Number(order.discount ?? 0),
+    total: Number(order.totalAmount ?? order.total ?? order.subtotal ?? 0),
+    paymentMethod: (order.paymentMethod || 'COD') as Order['paymentMethod'],
+    status: (order.status || 'Pending') as Order['status'],
+    date: order.orderDate || order.date || new Date().toISOString(),
+    crmSynced: order.crmSynced ?? true
+  };
+};
+
+const syncToCRM = async () => {
+  await new Promise(resolve => setTimeout(resolve, 300));
   return true;
 };
 
@@ -26,35 +81,17 @@ export const OrderProvider = ({ children }: { children?: ReactNode }) => {
     const fetchOrders = async () => {
       try {
         setIsLoading(true);
-        const res = await fetch(`${API_URL}/orders`);
-        if (res.ok) {
-          const apiResp = await res.json();
-          const data = apiResp.data || apiResp;
-          const transformed = (Array.isArray(data) ? data : []).map((order: any) => ({
-            id: order.orderNumber || `ORD-${order.id}`,
-            customer: {
-              name: order.customerName || order.customer?.name || 'Unknown',
-              email: order.customerEmail || order.customer?.email || '',
-              phone: order.customerPhone || order.customer?.phone || '',
-              address: order.customerAddress || order.customer?.address || ''
-            },
-            items: order.items ? (typeof order.items === 'string' ? JSON.parse(order.items) : order.items) : [],
-            subtotal: order.totalAmount || 0,
-            discount: 0,
-            total: order.totalAmount || 0,
-            paymentMethod: order.paymentMethod || 'Unknown',
-            status: order.status || 'Pending',
-            date: order.orderDate || new Date().toISOString()
-          }));
-          setOrders(transformed);
-          localStorage.setItem('lumina_orders', JSON.stringify(transformed));
-        } else {
-          const saved = localStorage.getItem('lumina_orders');
-          setOrders(saved ? JSON.parse(saved) : []);
+        const response = await fetch(`${API_URL}/orders`);
+
+        if (!response.ok) {
+          throw new Error('Unable to load orders from API');
         }
-      } catch (err) {
-        const saved = localStorage.getItem('lumina_orders');
-        setOrders(saved ? JSON.parse(saved) : []);
+
+        const payload = await response.json();
+        const data = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : [];
+        setOrders(data.map(mapApiOrder));
+      } catch (error) {
+        setOrders(readOrdersFromStorage());
       } finally {
         setIsLoading(false);
       }
@@ -63,9 +100,8 @@ export const OrderProvider = ({ children }: { children?: ReactNode }) => {
     fetchOrders();
   }, []);
 
-  // Persist whenever orders change
   useEffect(() => {
-    if (orders.length) localStorage.setItem('lumina_orders', JSON.stringify(orders));
+    localStorage.setItem('lumina_orders', JSON.stringify(orders));
   }, [orders]);
 
   const createOrder = async (
@@ -77,41 +113,83 @@ export const OrderProvider = ({ children }: { children?: ReactNode }) => {
     paymentMethod: string
   ): Promise<boolean> => {
     setIsLoading(true);
-    const newOrder: Order = {
-      id: `ORD-${Date.now()}`,
-      customer,
-      items,
-      subtotal,
-      discount,
-      total,
-      paymentMethod: paymentMethod as any,
-      status: 'Pending',
-      date: new Date().toISOString()
-    };
 
-    // Add locally
-    setOrders((prev) => [newOrder, ...prev]);
-
-    // Try to sync to backend (best-effort)
     try {
-      await fetch(`${API_URL}/orders`, {
+      const response = await fetch(`${API_URL}/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ customerId: null, totalAmount: total, items, notes: '' })
+        body: JSON.stringify({
+          customer,
+          items,
+          subtotal,
+          discount,
+          total,
+          paymentMethod,
+          notes: customer.note || ''
+        })
       });
-    } catch (e) {
-      // ignore
+
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(payload?.error || 'Unable to create order');
+      }
+
+      const createdOrder = mapApiOrder(payload.data || payload);
+      setOrders(prevOrders => [createdOrder, ...prevOrders.filter(order => order.id !== createdOrder.id)]);
+      await syncToCRM();
+      return true;
+    } catch (error) {
+      const fallbackOrder: Order = {
+        id: `ORD-${Date.now()}`,
+        customer,
+        items,
+        subtotal,
+        discount,
+        total,
+        paymentMethod: paymentMethod as Order['paymentMethod'],
+        status: 'Pending',
+        date: new Date().toISOString(),
+        crmSynced: false
+      };
+
+      setOrders(prevOrders => [fallbackOrder, ...prevOrders]);
+      await syncToCRM();
+      return true;
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    // Sync to CRM placeholder
-    await syncToCRM(newOrder);
+  const persistOrderStatus = async (orderId: string, status: Order['status']) => {
+    try {
+      const response = await fetch(`${API_URL}/orders/${orderId}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      });
 
-    setIsLoading(false);
-    return true;
+      if (!response.ok) {
+        return;
+      }
+
+      const payload = await response.json();
+      if (payload?.data) {
+        const updatedOrder = mapApiOrder(payload.data);
+        setOrders(prevOrders =>
+          prevOrders.map(order => (order.id === orderId ? { ...order, ...updatedOrder } : order))
+        );
+      }
+    } catch (error) {
+      // Keep optimistic state when API is unavailable.
+    }
   };
 
   const updateOrderStatus = (orderId: string, status: Order['status']) => {
-    setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status } : o)));
+    setOrders(prevOrders =>
+      prevOrders.map(order => (order.id === orderId ? { ...order, status } : order))
+    );
+    void persistOrderStatus(orderId, status);
   };
 
   return (
@@ -123,6 +201,9 @@ export const OrderProvider = ({ children }: { children?: ReactNode }) => {
 
 export const useOrders = () => {
   const context = useContext(OrderContext);
-  if (!context) throw new Error('useOrders must be used within OrderProvider');
+  if (!context) {
+    throw new Error('useOrders must be used within OrderProvider');
+  }
+
   return context;
 };

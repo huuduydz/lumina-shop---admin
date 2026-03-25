@@ -1,6 +1,36 @@
 
 import React, { useState } from 'react';
-import { Mail, MapPin, Phone, Send, Loader2, CheckCircle } from 'lucide-react';
+import { Mail, MapPin, Phone, Send, Loader2, CheckCircle, MessageCircle } from 'lucide-react';
+
+const CONTACT_CHANNELS = [
+  {
+    title: 'Call Center',
+    detail: '+84 909 123 456',
+    helper: 'Mon-Sat, 8:00 - 21:00',
+    href: 'tel:+84909123456',
+    icon: Phone
+  },
+  {
+    title: 'Email Support',
+    detail: 'support@luminashop.com',
+    helper: 'Response within 24 hours',
+    href: 'mailto:support@luminashop.com',
+    icon: Mail
+  },
+  {
+    title: 'Zalo Chat',
+    detail: 'zalo.me/0909123456',
+    helper: 'Fast consultation for product and order questions',
+    href: 'https://zalo.me/0909123456',
+    icon: MessageCircle
+  }
+];
+
+const QUICK_ACTIONS = [
+  { label: 'Open Messenger', href: 'https://m.me/luminashop.vn' },
+  { label: 'Go to Zalo', href: 'https://zalo.me/0909123456' },
+  { label: 'Send Email', href: 'mailto:sales@luminashop.com' }
+];
 
 const Contact = () => {
   const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
@@ -41,26 +71,50 @@ const Contact = () => {
                           <MapPin className="size-6" />
                       </div>
                       <div>
-                          <h3 className="font-bold text-slate-900 mb-1">Our Location</h3>
-                          <p className="text-slate-500 text-sm">123 Commerce St, Suite 100<br/>New York, NY 10012</p>
+                          <h3 className="font-bold text-slate-900 mb-1">Office & Showroom</h3>
+                          <p className="text-slate-500 text-sm">25 Nguyen Hue, District 1<br/>Ho Chi Minh City, Vietnam</p>
                       </div>
                   </div>
-                  <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex items-start gap-4">
-                      <div className="p-3 bg-blue-50 text-primary rounded-lg">
-                          <Mail className="size-6" />
-                      </div>
-                      <div>
-                          <h3 className="font-bold text-slate-900 mb-1">Email Us</h3>
-                          <p className="text-slate-500 text-sm">support@luminashop.com<br/>info@luminashop.com</p>
-                      </div>
-                  </div>
-                  <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex items-start gap-4">
-                      <div className="p-3 bg-blue-50 text-primary rounded-lg">
-                          <Phone className="size-6" />
-                      </div>
-                      <div>
-                          <h3 className="font-bold text-slate-900 mb-1">Call Us</h3>
-                          <p className="text-slate-500 text-sm">+1 (555) 123-4567<br/>Mon-Fri, 9am - 6pm</p>
+                  {CONTACT_CHANNELS.map(channel => {
+                      const Icon = channel.icon;
+
+                      return (
+                        <a
+                          key={channel.title}
+                          href={channel.href}
+                          target={channel.href.startsWith('http') ? '_blank' : undefined}
+                          rel={channel.href.startsWith('http') ? 'noreferrer' : undefined}
+                          className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex items-start gap-4 hover:border-primary hover:shadow-md transition-all"
+                        >
+                            <div className="p-3 bg-blue-50 text-primary rounded-lg">
+                                <Icon className="size-6" />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-slate-900 mb-1">{channel.title}</h3>
+                                <p className="text-slate-600 text-sm font-semibold">{channel.detail}</p>
+                                <p className="text-slate-500 text-sm mt-1">{channel.helper}</p>
+                            </div>
+                        </a>
+                      );
+                  })}
+
+                  <div className="bg-slate-900 text-white p-6 rounded-xl shadow-sm border border-slate-900">
+                      <h3 className="font-bold mb-3">Quick Support</h3>
+                      <p className="text-sm text-slate-200 mb-4">
+                        Need a faster answer? Use one of our direct channels below.
+                      </p>
+                      <div className="flex flex-col gap-2">
+                        {QUICK_ACTIONS.map(action => (
+                          <a
+                            key={action.label}
+                            href={action.href}
+                            target={action.href.startsWith('http') ? '_blank' : undefined}
+                            rel={action.href.startsWith('http') ? 'noreferrer' : undefined}
+                            className="inline-flex items-center justify-center rounded-lg bg-white/10 px-4 py-2.5 text-sm font-semibold hover:bg-white/20 transition-colors"
+                          >
+                            {action.label}
+                          </a>
+                        ))}
                       </div>
                   </div>
               </div>

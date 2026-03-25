@@ -12,7 +12,7 @@ interface Notification {
 
 interface CartContextType {
   cartItems: CartItem[];
-  addToCart: (product: Product, quantity: number, color: string) => void;
+  addToCart: (product: Product, quantity: number, color: string, size?: string) => void;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
@@ -48,9 +48,11 @@ export const CartProvider = ({ children }: { children?: ReactNode }) => {
     setNotification(prev => ({ ...prev, show: false }));
   };
 
-  const addToCart = (product: Product, quantity: number, color: string) => {
+  const addToCart = (product: Product, quantity: number, color: string, size?: string) => {
     setCartItems((prev) => {
-      const existingItem = prev.find((item) => item.id === product.id && item.selectedColor === color);
+      const existingItem = prev.find(
+        (item) => item.id === product.id && item.selectedColor === color && item.selectedSize === size
+      );
       
       // Calculate total quantity if we add this new amount
       const currentQty = existingItem ? existingItem.quantity : 0;
@@ -58,27 +60,26 @@ export const CartProvider = ({ children }: { children?: ReactNode }) => {
 
       if (totalQty > product.stockQuantity) {
           showToast(`Sorry, only ${product.stockQuantity} items available in stock.`, 'error');
-          // Cap at max stock if they try to exceed
           if (existingItem) {
                return prev.map((item) =>
-                  item.id === product.id && item.selectedColor === color
+                  item.id === product.id && item.selectedColor === color && item.selectedSize === size
                     ? { ...item, quantity: product.stockQuantity }
                     : item
                 );
           }
-          return [...prev, { ...product, quantity: product.stockQuantity, selectedColor: color }];
+          return [...prev, { ...product, quantity: product.stockQuantity, selectedColor: color, selectedSize: size }];
       }
 
       showToast(`Added ${quantity} ${product.name} to cart!`, 'success');
 
       if (existingItem) {
         return prev.map((item) =>
-          item.id === product.id && item.selectedColor === color
+          item.id === product.id && item.selectedColor === color && item.selectedSize === size
             ? { ...item, quantity: item.quantity + quantity }
             : item
         );
       }
-      return [...prev, { ...product, quantity, selectedColor: color }];
+      return [...prev, { ...product, quantity, selectedColor: color, selectedSize: size }];
     });
   };
 

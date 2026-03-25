@@ -15,21 +15,43 @@ const ProductDetail = () => {
   
   // Default to first product if not found/id undefined for demo
   const product = products.find(p => p.id === id) || products[0]; 
+  const productColors = product.availableColors?.length
+    ? product.availableColors
+    : [{ name: 'Default', hex: '#0f172a' }];
+  const productSizes = product.availableSizes?.length ? product.availableSizes : ['Standard'];
+  const productSpecifications = product.specifications?.length
+    ? product.specifications
+    : [
+        { label: 'Category', value: product.category },
+        { label: 'SKU', value: product.sku || 'Updating' },
+        { label: 'Availability', value: product.stockStatus }
+      ];
+  const productDetailSections = product.detailSections?.length
+    ? product.detailSections
+    : [product.description || 'Detailed product content is being updated.'];
+  const productReviews = product.customerReviews?.length ? product.customerReviews : [];
 
   const [quantity, setQuantity] = useState(1);
-  const [selectedColor, setSelectedColor] = useState('Midnight Black');
+  const [selectedColor, setSelectedColor] = useState(productColors[0].name);
+  const [selectedSize, setSelectedSize] = useState(productSizes[0]);
+  const [selectedImage, setSelectedImage] = useState(product.image);
+  const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'reviews'>('description');
 
   // Reset quantity when product changes
   useEffect(() => {
     setQuantity(1);
-  }, [product.id]);
+    setSelectedColor(productColors[0].name);
+    setSelectedSize(productSizes[0]);
+    setSelectedImage(product.image);
+    setActiveTab('description');
+  }, [product.id, product.image, productColors, productSizes]);
 
   const handleAddToCart = () => {
-      addToCart(product, quantity, selectedColor);
+      addToCart(product, quantity, selectedColor, selectedSize);
   };
 
   const handleBuyNow = () => {
-      addToCart(product, quantity, selectedColor);
+      addToCart(product, quantity, selectedColor, selectedSize);
       navigate('/cart');
   };
 
@@ -57,14 +79,22 @@ const ProductDetail = () => {
           {/* Gallery */}
           <div className="flex flex-col-reverse md:flex-row gap-4">
              <div className="flex md:flex-col gap-3 overflow-x-auto md:overflow-y-auto md:h-[500px] no-scrollbar py-1">
-                {product.thumbnails?.map((thumb, idx) => (
-                    <button key={idx} className={`shrink-0 size-20 rounded-lg overflow-hidden border-2 ${idx === 0 ? 'border-primary ring-2 ring-primary/20' : 'border-transparent hover:border-slate-300'}`}>
+                {(product.thumbnails?.length ? product.thumbnails : [product.image]).map((thumb, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setSelectedImage(thumb)}
+                      className={`shrink-0 size-20 rounded-lg overflow-hidden border-2 ${
+                        thumb === selectedImage
+                          ? 'border-primary ring-2 ring-primary/20'
+                          : 'border-transparent hover:border-slate-300'
+                      }`}
+                    >
                         <img src={thumb} className="w-full h-full object-cover" alt="thumbnail" />
                     </button>
                 ))}
              </div>
              <div className="flex-1 relative group overflow-hidden rounded-xl bg-gray-100 min-h-[300px] md:min-h-[500px]">
-                <img src={product.image} className="absolute inset-0 w-full h-full object-cover" alt={product.name} />
+                <img src={selectedImage} className="absolute inset-0 w-full h-full object-cover" alt={product.name} />
                 <button className="absolute top-4 right-4 p-2 bg-white/90 rounded-full shadow-sm hover:bg-white transition-all text-slate-400 hover:text-red-500">
                     <HeartIcon />
                 </button>
@@ -100,9 +130,35 @@ const ProductDetail = () => {
                 <div>
                     <span className="block text-sm font-semibold text-slate-900 mb-3">{t('product.color')} <span className="font-normal text-slate-500">{selectedColor}</span></span>
                     <div className="flex gap-3">
-                        <button onClick={() => setSelectedColor('Midnight Black')} className={`size-10 rounded-full bg-slate-900 ring-2 ring-offset-2 ${selectedColor === 'Midnight Black' ? 'ring-primary' : 'ring-transparent'} ring-offset-white`}></button>
-                        <button onClick={() => setSelectedColor('Silver')} className={`size-10 rounded-full bg-slate-200 hover:ring-2 hover:ring-offset-2 hover:ring-slate-300 transition-all ${selectedColor === 'Silver' ? 'ring-2 ring-primary' : ''}`}></button>
-                        <button onClick={() => setSelectedColor('Navy Blue')} className={`size-10 rounded-full bg-blue-800 hover:ring-2 hover:ring-offset-2 hover:ring-blue-300 transition-all ${selectedColor === 'Navy Blue' ? 'ring-2 ring-primary' : ''}`}></button>
+                        {productColors.map(color => (
+                          <button
+                            key={color.name}
+                            onClick={() => setSelectedColor(color.name)}
+                            title={color.name}
+                            className={`size-10 rounded-full border border-white shadow-sm ring-2 ring-offset-2 transition-all ${
+                              selectedColor === color.name ? 'ring-primary' : 'ring-transparent'
+                            }`}
+                            style={{ backgroundColor: color.hex }}
+                          ></button>
+                        ))}
+                    </div>
+                </div>
+                <div>
+                    <span className="block text-sm font-semibold text-slate-900 mb-3">Model / Size <span className="font-normal text-slate-500">{selectedSize}</span></span>
+                    <div className="flex gap-3">
+                        {productSizes.map(size => (
+                          <button
+                            key={size}
+                            onClick={() => setSelectedSize(size)}
+                            className={`px-4 py-2 rounded-lg border text-sm font-semibold ${
+                              selectedSize === size
+                                ? 'bg-slate-900 text-white border-slate-900'
+                                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                            }`}
+                          >
+                            {size}
+                          </button>
+                        ))}
                     </div>
                 </div>
                 <p className="text-slate-600 leading-relaxed">
@@ -174,32 +230,119 @@ const ProductDetail = () => {
                 <div className="w-full md:w-64 shrink-0">
                     <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 mb-4">Product Details</h3>
                     <nav className="flex flex-col gap-1">
-                        <a href="#" className="flex items-center justify-between p-3 rounded-lg bg-primary/10 text-primary font-bold border-l-4 border-primary">{t('product.description')}</a>
-                        <a href="#" className="flex items-center justify-between p-3 rounded-lg text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all">{t('product.specs')}</a>
-                        <a href="#" className="flex items-center justify-between p-3 rounded-lg text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all">Reviews</a>
+                        <button
+                          onClick={() => setActiveTab('description')}
+                          className={`flex items-center justify-between p-3 rounded-lg text-left transition-all ${
+                            activeTab === 'description'
+                              ? 'bg-primary/10 text-primary font-bold border-l-4 border-primary'
+                              : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                          }`}
+                        >
+                          {t('product.description')}
+                        </button>
+                        <button
+                          onClick={() => setActiveTab('specifications')}
+                          className={`flex items-center justify-between p-3 rounded-lg text-left transition-all ${
+                            activeTab === 'specifications'
+                              ? 'bg-primary/10 text-primary font-bold border-l-4 border-primary'
+                              : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                          }`}
+                        >
+                          {t('product.specs')}
+                        </button>
+                        <button
+                          onClick={() => setActiveTab('reviews')}
+                          className={`flex items-center justify-between p-3 rounded-lg text-left transition-all ${
+                            activeTab === 'reviews'
+                              ? 'bg-primary/10 text-primary font-bold border-l-4 border-primary'
+                              : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                          }`}
+                        >
+                          Reviews
+                        </button>
                     </nav>
                 </div>
                 <div className="flex-1 max-w-3xl">
-                    <h2 className="text-2xl font-bold text-slate-900 mb-4">Immersive Sound, All Day Long</h2>
-                    <p className="text-slate-600 leading-relaxed mb-6">
-                        Our Ultra-Fidelity Noise Cancelling Headphones are engineered for the audiophile in you. Featuring custom-tuned 40mm drivers, they deliver deep, punchy bass and crystal-clear highs.
-                    </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-                            <div className="size-10 rounded-full bg-blue-100 flex items-center justify-center text-primary mb-3">
-                                <Mic className="size-5" />
-                            </div>
-                            <h4 className="font-bold text-slate-900 mb-1">High-Res Audio</h4>
-                            <p className="text-sm text-slate-500">Certified for high-resolution audio playback.</p>
+                    {activeTab === 'description' && (
+                      <div>
+                        <h2 className="text-2xl font-bold text-slate-900 mb-4">{product.name}</h2>
+                        <div className="space-y-4">
+                          {productDetailSections.map((section, index) => (
+                            <p key={index} className="text-slate-600 leading-relaxed">
+                              {section}
+                            </p>
+                          ))}
                         </div>
-                        <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-                             <div className="size-10 rounded-full bg-blue-100 flex items-center justify-center text-primary mb-3">
-                                <Battery className="size-5" />
-                            </div>
-                            <h4 className="font-bold text-slate-900 mb-1">30-Hour Battery</h4>
-                            <p className="text-sm text-slate-500">Quick charge gives you 5 hours in 10 mins.</p>
+                      </div>
+                    )}
+
+                    {activeTab === 'specifications' && (
+                      <div>
+                        <h2 className="text-2xl font-bold text-slate-900 mb-4">{t('product.specs')}</h2>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {productSpecifications.map((specification, index) => (
+                              <div key={specification.label} className="p-4 rounded-xl bg-slate-50 border border-slate-100">
+                                  <div className="size-10 rounded-full bg-blue-100 flex items-center justify-center text-primary mb-3">
+                                      {index % 2 === 0 ? <Mic className="size-5" /> : <Battery className="size-5" />}
+                                  </div>
+                                  <h4 className="font-bold text-slate-900 mb-1">{specification.label}</h4>
+                                  <p className="text-sm text-slate-500">{specification.value}</p>
+                              </div>
+                            ))}
                         </div>
-                    </div>
+                      </div>
+                    )}
+
+                    {activeTab === 'reviews' && (
+                      <div>
+                        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
+                          <div>
+                            <h2 className="text-2xl font-bold text-slate-900 mb-2">Customer Reviews</h2>
+                            <p className="text-slate-500">
+                              {product.reviews} verified ratings with an average score of {product.rating.toFixed(1)}/5
+                            </p>
+                          </div>
+                          <div className="rounded-2xl bg-slate-50 border border-slate-200 px-5 py-4 min-w-[180px]">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-3xl font-bold text-slate-900">{product.rating.toFixed(1)}</span>
+                              <div className="flex text-yellow-400 gap-0.5">
+                                {[...Array(5)].map((_, index) => (
+                                  <Star
+                                    key={index}
+                                    className={`size-4 ${index < Math.round(product.rating) ? 'fill-current' : 'text-slate-200'}`}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                            <p className="text-sm text-slate-500">Based on shopper feedback</p>
+                          </div>
+                        </div>
+
+                        <div className="space-y-4">
+                          {productReviews.map(review => (
+                            <div key={review.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-3">
+                                <div>
+                                  <h4 className="font-bold text-slate-900">{review.title}</h4>
+                                  <p className="text-sm text-slate-500">
+                                    {review.author} • {new Date(review.date).toLocaleDateString()}
+                                  </p>
+                                </div>
+                                <div className="flex text-yellow-400 gap-0.5">
+                                  {[...Array(5)].map((_, index) => (
+                                    <Star
+                                      key={index}
+                                      className={`size-4 ${index < review.rating ? 'fill-current' : 'text-slate-200'}`}
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+                              <p className="text-slate-600 leading-relaxed">{review.comment}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                 </div>
             </div>
         </div>

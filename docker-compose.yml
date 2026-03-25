@@ -1,51 +1,41 @@
 version: '3.8'
 
 services:
-  # MySQL Database
-  mysql:
-    image: mysql:8.0
-    container_name: lumina_mysql
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: lumina_crm
-      MYSQL_USER: lumina_user
-      MYSQL_PASSWORD: lumina_pass
+  mongodb:
+    image: mongo:7
+    container_name: lumina_mongodb
     ports:
-      - "3306:3306"
+      - "27017:27017"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - mongodb_data:/data/db
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
       - lumina_network
 
-  # Node.js Backend
   backend:
     build:
       context: ./server
       dockerfile: Dockerfile
     container_name: lumina_backend
     environment:
-      DB_HOST: mysql
-      DB_USER: lumina_user
-      DB_PASSWORD: lumina_pass
-      DB_NAME: lumina_crm
+      MONGODB_URI: ${MONGODB_URI:-mongodb://mongodb:27017/lumina_crm}
       PORT: 3001
       FRONTEND_URL: http://localhost:3000
     ports:
       - "3001:3001"
     depends_on:
-      mysql:
+      mongodb:
         condition: service_healthy
     networks:
       - lumina_network
     restart: unless-stopped
 
 volumes:
-  mysql_data:
+  mongodb_data:
     driver: local
 
 networks:

@@ -104,3 +104,65 @@ export const orderAPI = {
     return res.json();
   }
 };
+
+export const productAPI = {
+  getProducts: async () => {
+    const res = await fetch(`${API_URL}/products`);
+    if (!res.ok) throw new Error('Failed to fetch products');
+    return res.json();
+  },
+
+  seedProducts: async (products) => {
+    const res = await fetch(`${API_URL}/products/seed`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ products })
+    });
+    if (!res.ok) throw new Error('Failed to seed products');
+    return res.json();
+  },
+
+  createProduct: async (data) => {
+    const res = await fetch(`${API_URL}/products`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error('Failed to create product');
+    return res.json();
+  },
+
+  updateProduct: async (id, data) => {
+    const res = await fetch(`${API_URL}/products/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error('Failed to update product');
+    return res.json();
+  },
+
+  deleteProduct: async (id) => {
+    const res = await fetch(`${API_URL}/products/${id}`, {
+      method: 'DELETE'
+    });
+    if (!res.ok) throw new Error('Failed to delete product');
+    return res.json();
+  },
+
+  getTransactions: async () => {
+    const res = await fetch(`${API_URL}/products/transactions`);
+    if (!res.ok) throw new Error('Failed to fetch transactions');
+    return res.json();
+  },
+
+  updateStock: async (id, data) => {
+    const res = await fetch(`${API_URL}/products/${id}/stock`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error('Failed to update stock');
+    return res.json();
+  }
+};

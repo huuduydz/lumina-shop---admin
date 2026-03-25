@@ -247,7 +247,11 @@ const AdminOrders = () => {
                                         <img src={item.image} alt="" className="size-16 rounded-lg object-cover bg-slate-100" />
                                         <div className="flex-1">
                                             <p className="font-bold text-slate-900 text-sm">{item.name}</p>
-                                            <p className="text-xs text-slate-500">{item.selectedColor} | x{item.quantity}</p>
+                                            <p className="text-xs text-slate-500">
+                                                {item.selectedColor}
+                                                {item.selectedSize && ` • Size ${item.selectedSize}`}
+                                                {` | x${item.quantity}`}
+                                            </p>
                                         </div>
                                         <p className="font-bold text-slate-900">${(item.price * item.quantity).toFixed(2)}</p>
                                     </div>

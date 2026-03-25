@@ -1,4 +1,23 @@
 
+export interface ProductColorOption {
+  name: string;
+  hex: string;
+}
+
+export interface ProductSpecification {
+  label: string;
+  value: string;
+}
+
+export interface ProductReview {
+  id: string;
+  author: string;
+  title: string;
+  rating: number;
+  date: string;
+  comment: string;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -14,6 +33,11 @@ export interface Product {
   minStock: number; // BOSP - Buffer/Safety Stock level
   sku?: string;
   description?: string;
+  availableColors?: ProductColorOption[];
+  availableSizes?: string[];
+  specifications?: ProductSpecification[];
+  detailSections?: string[];
+  customerReviews?: ProductReview[];
 }
 
 export interface CartItem extends Product {

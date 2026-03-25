@@ -83,6 +83,13 @@ const AdminAddProduct = () => {
       stockStatus,
       image: image || 'https://picsum.photos/400/400',
       sku: sku || `SKU-${Math.floor(Math.random() * 10000)}`,
+      availableColors: [
+        { name: 'Default Black', hex: '#111827' },
+        { name: 'Soft White', hex: '#f8fafc' },
+        { name: 'Ocean Blue', hex: '#1d4ed8' }
+      ],
+      availableSizes: ['Standard', 'Plus', 'Pro'],
+      ...(id ? {} : { stockQuantity: 25, minStock: 5 })
     };
 
     if (id) {
@@ -96,6 +103,8 @@ const AdminAddProduct = () => {
             rating: 0,
             reviews: 0,
             thumbnails: [],
+            stockQuantity: productData.stockQuantity || 25,
+            minStock: productData.minStock || 5,
         };
         addProduct(newProduct);
     }

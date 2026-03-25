@@ -195,7 +195,14 @@ const Cart = () => {
                             <div className="flex flex-col justify-between flex-1 py-1">
                                 <div>
                                     <h3 className="text-slate-900 text-lg font-bold leading-tight mb-1">{item.name}</h3>
-                                    <p className="text-slate-500 text-sm font-medium">{t('product.color')} {item.selectedColor}</p>
+                                    <p className="text-slate-500 text-sm font-medium">
+                                        {t('product.color')} {item.selectedColor}
+                                        {item.selectedSize && (
+                                            <span className="ml-2">
+                                                Size {item.selectedSize}
+                                            </span>
+                                        )}
+                                    </p>
                                     <div className="flex items-center gap-2 mt-1">
                                         <p className={`text-sm font-medium ${item.stockStatus === 'In Stock' ? 'text-green-600' : 'text-orange-600'}`}>
                                             {item.stockStatus}

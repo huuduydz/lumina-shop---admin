@@ -40,12 +40,12 @@ const AdminCRMCustomers = () => {
     setIsModalOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (editingCustomer) {
-      updateCustomer(editingCustomer.id, formData);
+      await updateCustomer(editingCustomer.id, formData);
     } else {
-      addCustomer(formData);
+      await addCustomer(formData);
     }
     setIsModalOpen(false);
   };

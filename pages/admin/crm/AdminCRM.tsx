@@ -19,7 +19,7 @@ const AdminCRM = () => {
     return acc;
   }, {} as Record<string, number>);
   
-  const returningCustomers = Object.values(customerOrderCounts).filter(count => count > 1).length;
+  const returningCustomers = (Object.values(customerOrderCounts) as number[]).filter(count => count > 1).length;
   const returningRate = totalCustomers > 0 ? ((returningCustomers / totalCustomers) * 100).toFixed(1) : 0;
 
   // Recent Activity (Simulated)

@@ -16,6 +16,7 @@ import Cart from './pages/Cart';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Contact from './pages/Contact';
+import News from './pages/News';
 import AdminProducts from './pages/admin/AdminProducts';
 import AdminAddProduct from './pages/admin/AdminAddProduct';
 import AdminCoupons from './pages/admin/AdminCoupons';
@@ -48,7 +49,7 @@ const Navbar = () => {
         <nav className="hidden md:flex items-center gap-6">
           <Link to="/" className="text-sm font-medium text-slate-900 hover:text-primary transition-colors">{t('nav.home')}</Link>
           <Link to="/shop" className="text-sm font-bold text-primary">{t('nav.shop')}</Link>
-          <Link to="#" className="text-sm font-medium text-slate-900 hover:text-primary transition-colors">{t('nav.about')}</Link>
+          <Link to="/news" className="text-sm font-medium text-slate-900 hover:text-primary transition-colors">{t('nav.news')}</Link>
           <Link to="/contact" className="text-sm font-medium text-slate-900 hover:text-primary transition-colors">{t('nav.contact')}</Link>
           {user && (user.role === 'Admin' || user.role === 'Staff') && (
             <Link to="/admin/orders" className="text-sm font-medium text-white bg-slate-800 px-3 py-1 rounded-full hover:bg-slate-700 transition-colors ml-4 shadow-sm">{t('nav.admin')}</Link>
@@ -267,6 +268,7 @@ const App = () => {
                                 <Route path="/product/:id" element={<><Navbar /><ProductDetail /></>} />
                                 <Route path="/cart" element={<><Navbar /><Cart /></>} />
                                 <Route path="/contact" element={<><Navbar /><Contact /></>} />
+                                <Route path="/news" element={<><Navbar /><News /></>} />
 
                                 {/* Admin Routes - Protected */}
                                 <Route path="/admin" element={<Navigate to="/admin/crm" replace />} />
