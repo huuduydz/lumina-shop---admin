@@ -42,7 +42,107 @@ const POSTS: NewsPost[] = [
     image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=1400&auto=format&fit=crop',
     excerpt:
       'Explore our latest collection of denim, leather goods and accessories curated for everyday city life.'
+  },
+  {
+    id: '4',
+    title: '5 Checkout Optimizations That Increase Conversion Rate',
+    category: 'E-commerce Tips',
+    date: 'April 29, 2026',
+    author: 'Growth Team',
+    image: 'https://images.unsplash.com/photo-1556740758-90de374c12ad?q=80&w=1400&auto=format&fit=crop',
+    excerpt:
+      'A practical checklist to reduce cart abandonment, improve trust signals and make your checkout flow faster on mobile.'
+  },
+  {
+    id: '5',
+    title: 'Behind The Scenes: How We Curate Seasonal Collections',
+    category: 'Company News',
+    date: 'April 20, 2026',
+    author: 'Editorial Team',
+    image: 'https://images.unsplash.com/photo-1521737711867-e3b97375f902?q=80&w=1400&auto=format&fit=crop',
+    excerpt:
+      'From trend research to product testing, here is the process our team uses to select products for each campaign.'
+  },
+  {
+    id: '6',
+    title: 'Customer Story: Setting Up A Small Cafe With Lumina Decor',
+    category: 'Customer Story',
+    date: 'April 09, 2026',
+    author: 'Community Team',
+    image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?q=80&w=1400&auto=format&fit=crop',
+    excerpt:
+      'See how one of our customers transformed a compact cafe space into a warm and modern destination.'
+  },
+  {
+    id: '7',
+    title: 'Tech Spotlight: Choosing The Right Headphones In 2026',
+    category: 'Technology',
+    date: 'March 26, 2026',
+    author: 'Product Team',
+    image: 'https://images.unsplash.com/photo-1585386959984-a4155224a1ad?q=80&w=1400&auto=format&fit=crop',
+    excerpt:
+      'A clear buying guide covering ANC quality, comfort, battery life and codec support for different user needs.'
+  },
+  {
+    id: '8',
+    title: 'Sustainable Packaging Update For All Nationwide Deliveries',
+    category: 'Sustainability',
+    date: 'March 14, 2026',
+    author: 'Operations Team',
+    image: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?q=80&w=1400&auto=format&fit=crop',
+    excerpt:
+      'We are moving to recyclable packaging materials and reducing plastic use across every order shipment.'
+  },
+  {
+    id: '9',
+    title: 'Weekly Deals Calendar: Best Time To Buy This Month',
+    category: 'Promotion',
+    date: 'March 03, 2026',
+    author: 'Sales Team',
+    image: 'https://images.unsplash.com/photo-1607082349566-187342175e2f?q=80&w=1400&auto=format&fit=crop',
+    excerpt:
+      'Plan your shopping with our monthly discount calendar featuring flash sales, bundles and free shipping windows.'
+  },
+  {
+    id: '10',
+    title: 'Warehouse Upgrade Helps Us Ship Orders Faster',
+    category: 'Company News',
+    date: 'February 21, 2026',
+    author: 'Logistics Team',
+    image: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=1400&auto=format&fit=crop',
+    excerpt:
+      'A new picking and sorting setup has reduced processing time so your orders leave our warehouse sooner.'
+  },
+  {
+    id: '11',
+    title: 'Fashion Guide: 8 Easy Outfit Combos For Busy Workdays',
+    category: 'Style Guide',
+    date: 'February 10, 2026',
+    author: 'Style Editor',
+    image: 'https://images.unsplash.com/photo-1445205170230-053b83016050?q=80&w=1400&auto=format&fit=crop',
+    excerpt:
+      'Mix and match essentials to create polished outfits that work from office meetings to evening plans.'
+  },
+  {
+    id: '12',
+    title: 'Case Study: How Bundles Improved Average Order Value',
+    category: 'Case Study',
+    date: 'January 28, 2026',
+    author: 'Analytics Team',
+    image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=1400&auto=format&fit=crop',
+    excerpt:
+      'What happened after introducing curated bundles and recommendation widgets on product detail pages.'
   }
+];
+
+const POPULAR_TOPICS = [
+  'Promotions',
+  'Tutorials',
+  'Home Decor',
+  'Fashion',
+  'Electronics',
+  'E-commerce Tips',
+  'Case Study'
 ];
 
 const News = () => {
@@ -116,21 +216,18 @@ const News = () => {
                 Popular Topics
               </h3>
               <div className="flex flex-wrap gap-2">
-                <button className="px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-900 text-white">
-                  Promotions
-                </button>
-                <button className="px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
-                  Tutorials
-                </button>
-                <button className="px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
-                  Home Decor
-                </button>
-                <button className="px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
-                  Fashion
-                </button>
-                <button className="px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
-                  Electronics
-                </button>
+                {POPULAR_TOPICS.map((topic, index) => (
+                  <button
+                    key={topic}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold ${
+                      index === 0
+                        ? 'bg-slate-900 text-white'
+                        : 'bg-slate-100 text-slate-700'
+                    }`}
+                  >
+                    {topic}
+                  </button>
+                ))}
               </div>
             </div>
 
@@ -151,6 +248,22 @@ const News = () => {
                     Join Newsletter
                   </button>
                 </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+              <h3 className="text-sm font-bold text-slate-900 mb-4 tracking-wide uppercase">
+                Recent Posts
+              </h3>
+              <div className="space-y-3">
+                {POSTS.slice(0, 5).map(post => (
+                  <div key={`recent-${post.id}`} className="pb-3 border-b border-slate-100 last:border-b-0">
+                    <p className="text-xs text-slate-500 mb-1">{post.date}</p>
+                    <p className="text-sm font-semibold text-slate-800 leading-snug">
+                      {post.title}
+                    </p>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -178,4 +291,3 @@ const News = () => {
 };
 
 export default News;
-
