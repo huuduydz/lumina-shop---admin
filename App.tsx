@@ -17,6 +17,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Contact from './pages/Contact';
 import News from './pages/News';
+import NewsDetail from './pages/NewsDetail';
 import AdminProducts from './pages/admin/AdminProducts';
 import AdminAddProduct from './pages/admin/AdminAddProduct';
 import AdminCoupons from './pages/admin/AdminCoupons';
@@ -24,8 +25,6 @@ import AdminUsers from './pages/admin/AdminUsers';
 import AdminTransactions from './pages/admin/AdminTransactions';
 import AdminOrders from './pages/admin/AdminOrders';
 import AdminCRM from './pages/admin/crm/AdminCRM';
-import AdminCRMCustomers from './pages/admin/crm/AdminCRMCustomers';
-import AdminCRMCustomerDetail from './pages/admin/crm/AdminCRMCustomerDetail';
 
 // --- Components ---
 
@@ -165,13 +164,9 @@ const AdminLayout = ({ children }: { children?: React.ReactNode }) => {
             </Link>
             
             <div className="px-2 mt-6 mb-2 text-xs font-bold text-slate-400 uppercase tracking-wider">CRM & Marketing</div>
-            <Link to="/admin/crm" className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${isActive('/admin/crm') && !isActive('/admin/crm/customers') ? 'bg-primary text-white shadow-md shadow-primary/20' : 'text-slate-600 hover:bg-slate-50'}`}>
+            <Link to="/admin/crm" className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${isActive('/admin/crm') ? 'bg-primary text-white shadow-md shadow-primary/20' : 'text-slate-600 hover:bg-slate-50'}`}>
               <UserPlus className="size-5" />
               CRM Dashboard
-            </Link>
-            <Link to="/admin/crm/customers" className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${isActive('/admin/crm/customers') ? 'bg-primary text-white shadow-md shadow-primary/20' : 'text-slate-600 hover:bg-slate-50'}`}>
-              <User className="size-5" />
-              Customers
             </Link>
             <Link to="/admin/coupons" className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${isActive('/admin/coupons') ? 'bg-primary text-white shadow-md shadow-primary/20' : 'text-slate-600 hover:bg-slate-50'}`}>
               <Tag className="size-5" />
@@ -269,6 +264,7 @@ const App = () => {
                                 <Route path="/cart" element={<><Navbar /><Cart /></>} />
                                 <Route path="/contact" element={<><Navbar /><Contact /></>} />
                                 <Route path="/news" element={<><Navbar /><News /></>} />
+                                <Route path="/news/:id" element={<><Navbar /><NewsDetail /></>} />
 
                                 {/* Admin Routes - Protected */}
                                 <Route path="/admin" element={<Navigate to="/admin/crm" replace />} />
@@ -278,8 +274,7 @@ const App = () => {
                                         <AdminLayout>
                                             <Routes>
                                                 <Route path="crm" element={<AdminCRM />} />
-                                                <Route path="crm/customers" element={<AdminCRMCustomers />} />
-                                                <Route path="crm/customers/:id" element={<AdminCRMCustomerDetail />} />
+                                                <Route path="crm/customers/*" element={<Navigate to="/admin/crm" replace />} />
                                                 <Route path="orders" element={<AdminOrders />} />
                                                 <Route path="products" element={<AdminProducts />} />
                                                 <Route path="products/new" element={<AdminAddProduct />} />
