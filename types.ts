@@ -2,6 +2,7 @@
 export interface ProductColorOption {
   name: string;
   hex: string;
+  additionalPrice?: number;
 }
 
 export interface ProductSpecification {
@@ -44,6 +45,10 @@ export interface CartItem extends Product {
   quantity: number;
   selectedColor: string;
   selectedSize?: string;
+  itemKey?: string;
+  basePrice?: number;
+  selectedColorExtra?: number;
+  selectedSizeExtra?: number;
 }
 
 export interface User {

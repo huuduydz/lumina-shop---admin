@@ -27,7 +27,7 @@ const CONTACT_CHANNELS = [
 ];
 
 const QUICK_ACTIONS = [
-  { label: 'Open Messenger', href: 'https://m.me/luminashop.vn' },
+  { label: 'Open Messenger', href: 'https://www.facebook.com/nguyen.huu.duy.722299/' },
   { label: 'Go to Zalo', href: 'https://zalo.me/0909123456' },
   { label: 'Send Email', href: 'mailto:sales@luminashop.com' }
 ];

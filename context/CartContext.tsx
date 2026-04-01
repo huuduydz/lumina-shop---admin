@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { Product, CartItem, Coupon } from '../types';
 import { useProducts } from './ProductContext';
 import { X, CheckCircle, AlertCircle } from 'lucide-react';
+import { buildCartItemKey, VariantPriceDetails } from '../productVariants';
 
 interface Notification {
   show: boolean;
@@ -12,9 +13,15 @@ interface Notification {
 
 interface CartContextType {
   cartItems: CartItem[];
-  addToCart: (product: Product, quantity: number, color: string, size?: string) => void;
-  removeFromCart: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
+  addToCart: (
+    product: Product,
+    quantity: number,
+    color: string,
+    size?: string,
+    pricing?: VariantPriceDetails
+  ) => void;
+  removeFromCart: (itemKey: string) => void;
+  updateQuantity: (itemKey: string, quantity: number) => void;
   clearCart: () => void;
   cartTotal: number;
   itemCount: number;
@@ -48,11 +55,20 @@ export const CartProvider = ({ children }: { children?: ReactNode }) => {
     setNotification(prev => ({ ...prev, show: false }));
   };
 
-  const addToCart = (product: Product, quantity: number, color: string, size?: string) => {
+  const addToCart = (
+    product: Product,
+    quantity: number,
+    color: string,
+    size?: string,
+    pricing?: VariantPriceDetails
+  ) => {
     setCartItems((prev) => {
+      const itemKey = buildCartItemKey(product.id, color, size);
       const existingItem = prev.find(
-        (item) => item.id === product.id && item.selectedColor === color && item.selectedSize === size
+        (item) => (item.itemKey || buildCartItemKey(item.id, item.selectedColor, item.selectedSize)) === itemKey
       );
+      const itemPrice = pricing?.finalPrice ?? product.price;
+      const itemOriginalPrice = pricing?.finalOriginalPrice ?? product.originalPrice;
       
       // Calculate total quantity if we add this new amount
       const currentQty = existingItem ? existingItem.quantity : 0;
@@ -62,38 +78,71 @@ export const CartProvider = ({ children }: { children?: ReactNode }) => {
           showToast(`Sorry, only ${product.stockQuantity} items available in stock.`, 'error');
           if (existingItem) {
                return prev.map((item) =>
-                  item.id === product.id && item.selectedColor === color && item.selectedSize === size
+                  (item.itemKey || buildCartItemKey(item.id, item.selectedColor, item.selectedSize)) === itemKey
                     ? { ...item, quantity: product.stockQuantity }
                     : item
                 );
           }
-          return [...prev, { ...product, quantity: product.stockQuantity, selectedColor: color, selectedSize: size }];
+          return [
+            ...prev,
+            {
+              ...product,
+              price: itemPrice,
+              originalPrice: itemOriginalPrice,
+              quantity: product.stockQuantity,
+              selectedColor: color,
+              selectedSize: size,
+              itemKey,
+              basePrice: pricing?.basePrice ?? product.price,
+              selectedColorExtra: pricing?.colorExtra ?? 0,
+              selectedSizeExtra: pricing?.sizeExtra ?? 0
+            }
+          ];
       }
 
       showToast(`Added ${quantity} ${product.name} to cart!`, 'success');
 
       if (existingItem) {
         return prev.map((item) =>
-          item.id === product.id && item.selectedColor === color && item.selectedSize === size
+          (item.itemKey || buildCartItemKey(item.id, item.selectedColor, item.selectedSize)) === itemKey
             ? { ...item, quantity: item.quantity + quantity }
             : item
         );
       }
-      return [...prev, { ...product, quantity, selectedColor: color, selectedSize: size }];
+      return [
+        ...prev,
+        {
+          ...product,
+          price: itemPrice,
+          originalPrice: itemOriginalPrice,
+          quantity,
+          selectedColor: color,
+          selectedSize: size,
+          itemKey,
+          basePrice: pricing?.basePrice ?? product.price,
+          selectedColorExtra: pricing?.colorExtra ?? 0,
+          selectedSizeExtra: pricing?.sizeExtra ?? 0
+        }
+      ];
     });
   };
 
-  const removeFromCart = (productId: string) => {
-    setCartItems((prev) => prev.filter((item) => item.id !== productId));
+  const removeFromCart = (itemKey: string) => {
+    setCartItems((prev) =>
+      prev.filter(
+        (item) => (item.itemKey || buildCartItemKey(item.id, item.selectedColor, item.selectedSize)) !== itemKey
+      )
+    );
     showToast('Item removed from cart', 'success');
   };
 
-  const updateQuantity = (productId: string, quantity: number) => {
+  const updateQuantity = (itemKey: string, quantity: number) => {
     if (quantity < 1) return;
     
     setCartItems((prev) =>
       prev.map((item) => {
-          if (item.id === productId) {
+          const currentItemKey = item.itemKey || buildCartItemKey(item.id, item.selectedColor, item.selectedSize);
+          if (currentItemKey === itemKey) {
               // Check stock limit
               if (quantity > item.stockQuantity) {
                   showToast(`Cannot add more. Max stock reached (${item.stockQuantity}).`, 'error');

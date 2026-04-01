@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { CRMNotification, Customer, MembershipLevel, Order } from '../types';
 import { useOrders } from './OrderContext';
+import { API_URL } from '../api';
 
 interface CRMContextType {
   customers: Customer[];
@@ -18,7 +19,6 @@ interface CRMContextType {
 }
 
 const CRMContext = createContext<CRMContextType | undefined>(undefined);
-const API_URL = 'http://localhost:3001/api';
 
 const readCustomersFromStorage = (): Customer[] => {
   try {

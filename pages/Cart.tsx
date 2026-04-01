@@ -7,6 +7,7 @@ import { useCoupons } from '../context/CouponContext';
 import { useOrders } from '../context/OrderContext';
 import { CustomerInfo } from '../types';
 import { useLanguage } from '../context/LanguageContext';
+import { buildCartItemKey } from '../productVariants';
 
 // Interfaces for Vietnam Address API
 interface Province {
@@ -188,7 +189,10 @@ const Cart = () => {
 
                 <div className="flex flex-col gap-4">
                     {cartItems.map((item) => (
-                        <div key={`${item.id}-${item.selectedColor}`} className="group flex gap-4 bg-white p-4 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+                        <div
+                          key={item.itemKey || buildCartItemKey(item.id, item.selectedColor, item.selectedSize)}
+                          className="group flex gap-4 bg-white p-4 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow"
+                        >
                             <div className="bg-slate-100 rounded-lg size-24 shrink-0 overflow-hidden">
                                 <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
                             </div>
@@ -199,10 +203,15 @@ const Cart = () => {
                                         {t('product.color')} {item.selectedColor}
                                         {item.selectedSize && (
                                             <span className="ml-2">
-                                                Size {item.selectedSize}
+                                                Model/Size {item.selectedSize}
                                             </span>
                                         )}
                                     </p>
+                                    {(item.selectedColorExtra || item.selectedSizeExtra) ? (
+                                      <p className="text-xs font-medium text-primary mt-1">
+                                        Option surcharge: +${((item.selectedColorExtra || 0) + (item.selectedSizeExtra || 0)).toFixed(2)}
+                                      </p>
+                                    ) : null}
                                     <div className="flex items-center gap-2 mt-1">
                                         <p className={`text-sm font-medium ${item.stockStatus === 'In Stock' ? 'text-green-600' : 'text-orange-600'}`}>
                                             {item.stockStatus}
@@ -210,15 +219,28 @@ const Cart = () => {
                                         <span className="text-xs text-slate-400">| Stock: {item.stockQuantity}</span>
                                     </div>
                                 </div>
-                                <p className="text-primary font-bold text-lg">${item.price.toFixed(2)}</p>
+                                <div>
+                                  <p className="text-primary font-bold text-lg">${item.price.toFixed(2)}</p>
+                                  {item.basePrice && item.basePrice !== item.price ? (
+                                    <p className="text-xs text-slate-500">
+                                      Base ${item.basePrice.toFixed(2)} + options ${(((item.selectedColorExtra || 0) + (item.selectedSizeExtra || 0))).toFixed(2)}
+                                    </p>
+                                  ) : null}
+                                </div>
                             </div>
                             <div className="flex flex-col items-end justify-between py-1">
-                                <button onClick={() => removeFromCart(item.id)} className="text-slate-400 hover:text-red-500 p-1"><Trash2 className="size-5" /></button>
+                                <button
+                                  onClick={() => removeFromCart(item.itemKey || buildCartItemKey(item.id, item.selectedColor, item.selectedSize))}
+                                  className="text-slate-400 hover:text-red-500 p-1"
+                                ><Trash2 className="size-5" /></button>
                                 <div className="flex items-center gap-1 bg-slate-50 rounded-lg p-1 border border-slate-200">
-                                    <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="size-7 flex items-center justify-center bg-white rounded shadow-sm text-slate-600 hover:bg-slate-100 font-medium">-</button>
+                                    <button
+                                      onClick={() => updateQuantity(item.itemKey || buildCartItemKey(item.id, item.selectedColor, item.selectedSize), item.quantity - 1)}
+                                      className="size-7 flex items-center justify-center bg-white rounded shadow-sm text-slate-600 hover:bg-slate-100 font-medium"
+                                    >-</button>
                                     <input className="w-8 p-0 text-center bg-transparent border-none text-sm font-medium focus:ring-0 text-slate-900" value={item.quantity} readOnly />
                                     <button 
-                                        onClick={() => updateQuantity(item.id, item.quantity + 1)} 
+                                        onClick={() => updateQuantity(item.itemKey || buildCartItemKey(item.id, item.selectedColor, item.selectedSize), item.quantity + 1)} 
                                         className="size-7 flex items-center justify-center bg-white rounded shadow-sm text-primary hover:bg-slate-100 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                                         disabled={item.quantity >= item.stockQuantity}
                                     >+</button>

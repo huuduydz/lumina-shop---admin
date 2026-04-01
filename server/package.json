@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "node index.js",
-    "dev": "node index.js"
+    "dev": "node index.js",
+    "seed:admin": "node seedAdminDemoData.js"
   },
   "keywords": ["crm", "ecommerce"],
   "author": "",

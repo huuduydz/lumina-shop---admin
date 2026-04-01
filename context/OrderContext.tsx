@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { CartItem, CustomerInfo, Order } from '../types';
+import { API_URL } from '../api';
 
 interface OrderContextType {
   orders: Order[];
@@ -16,7 +17,6 @@ interface OrderContextType {
 }
 
 const OrderContext = createContext<OrderContextType | undefined>(undefined);
-const API_URL = 'http://localhost:3001/api';
 
 const readOrdersFromStorage = (): Order[] => {
   try {
